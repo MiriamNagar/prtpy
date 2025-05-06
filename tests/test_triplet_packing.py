@@ -11,6 +11,7 @@ from prtpy.packing.triplet_packing import (
     InvalidInputTypeError,
 )
 import pytest
+import numpy.testing as npt
 
 
 Falkenauer_t_test_cases = [
@@ -228,12 +229,14 @@ def test_randomized_items_packing_allocation():
     for func in [backtrack_method, local_search]:
         for b_size, item_num in zip(bin_sizes, item_nums):
             item_list, bins = create_random_allocatable_item_list(b_size, item_num)
-            _, triplets = bins
+            sums, triplets = bins
             assert check_item_list_is_valid(b_size, triplets)
 
             bin_result = func(BinnerKeepingContents(), binsize=b_size, items=item_list)
+            sum_result, triplets_result = bin_result
 
-            assert sorted(bin_result) == sorted(bins)
+            npt.assert_array_equal(sum_result, sums)
+            assert sorted(triplets_result) == sorted(triplets)
 
 
 def test_items_packing_allocation():
