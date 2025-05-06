@@ -134,6 +134,20 @@ Falkenauer_t_test_cases = [
 
 
 def _generate_items_and_put_into_bins(seed: int, bin_size: int, items_num: int):
+    DEFAULT_BIN_SIZE = 1000
+    DEFAULT_ITEM_NUM = 60
+
+    if bin_size < 50:
+        logging.warning(f"Bin size too small: {bin_size}")
+        bin_size = DEFAULT_BIN_SIZE
+        logging.info(f"changed bin size to: {bin_size}")
+        
+
+    if items_num < 3:
+        logging.warning(f"Items num too small: {items_num}")
+        items_num = DEFAULT_ITEM_NUM
+        logging.info(f"changed items num to: {items_num}")
+
     random.seed(seed)
     upper_bnd: int = round(bin_size / 2)
     lower_bnd: int = round(bin_size / 4)
@@ -164,14 +178,6 @@ def _generate_items_and_put_into_bins(seed: int, bin_size: int, items_num: int):
 def create_random_allocatable_item_list(
     bin_size: int = 1000, items_num: int = 60
 ) -> Tuple[List, BinnerKeepingContents]:
-    if bin_size < 50:
-        logging.error(f"Bin size too small: {bin_size}")
-        return
-
-    if items_num < 3:
-        logging.error(f"Items num too small: {items_num}")
-        return
-
     SEED = 97
 
     return _generate_items_and_put_into_bins(SEED, bin_size, items_num)
@@ -180,12 +186,6 @@ def create_random_allocatable_item_list(
 def create_random_not_allocatable_item_list(
     bin_size: int = 1000, items_num: int = 60
 ) -> List:
-    if bin_size < 0 or items_num < 0:
-        logging.error(
-            f"Received negative number- bin_size: {bin_size}, items_num: {items_num}"
-        )
-        return
-
     SEED = 71
 
     item_list, bins = _generate_items_and_put_into_bins(SEED, bin_size, items_num)
@@ -197,7 +197,7 @@ def create_random_not_allocatable_item_list(
 
 def check_item_list_is_valid(bin_size: int, bins: List) -> bool:
     ITEMS_PER_BIN_SIZE = 3
-    if (len(bins) * 3) % ITEMS_PER_BIN_SIZE != 0:
+    if len(bins) == 0:
         return False
     for bin in bins:
         triplet_sum = sum(bin)
