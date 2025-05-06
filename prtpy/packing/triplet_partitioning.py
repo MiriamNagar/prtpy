@@ -57,7 +57,7 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
 
     Given a list of items and a number of bin, returns an allocation of items
     to bins such that the allocation satisfies a triplet item allocations and each triplet sum
-    is equal to the bin size. 
+    is equal to the bin size. does so using backtrack method. 
 
     Parameters:
         items: List of items to be allocated.
@@ -129,7 +129,7 @@ def local_search(binner: Binner, binsize: float, items: List[any])->BinsArray:
 
     Given a list of items and a number of bin, returns an allocation of items
     to bins such that the allocation satisfies a triplet item allocations and each triplet sum
-    is equal to the bin size. 
+    is equal to the bin size. does so using local_search method.
     
     >>> from prtpy import BinnerKeepingContents
     >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[500, 400, 100, 490, 310, 200, 470, 330, 200]))
