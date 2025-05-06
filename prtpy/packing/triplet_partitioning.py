@@ -57,7 +57,7 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
 
     Given a list of items and a number of bin, returns an allocation of items
     to bins such that the allocation satisfies a triplet item allocations and each triplet sum
-    is equal to the bun size. 
+    is equal to the bin size. 
 
     Parameters:
         items: List of items to be allocated.
@@ -66,7 +66,7 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
         A list of lists, where each inner list contains the items allocated to one bin.
 
 
-    >>> from prtpy import BinnerKeepingContents, BinnerKeepingSums
+    >>> from prtpy import BinnerKeepingContents
     >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[500, 400, 100, 490, 310, 200, 470, 330, 200]))
     Bin #0: [500, 400, 100], sum=1000
     Bin #1: [470, 330, 200], sum=1000
@@ -77,7 +77,7 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
     ...
     NoSolutionError: No valid allocation found.
     
-    >>> printbins(backtrack_method(BinnerKeepingSums(), binsize=1000, items=[400, 350, 250]))
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[400, 350, 250]))
     Bin #0: [400, 350, 250], sum=1000
     
     >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[500, 400, 100, 200, 300]))
@@ -90,12 +90,14 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
     ...
     NoSolutionError: No valid allocation found.
     
-    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[369, 334, 297, 447, 302, 251, 409, 
-                                339, 252, 402, 333, 265, 399, 347, 254, 462, 277, 261, 
-                                465, 280, 255, 412, 313, 275, 444, 305, 251, 403, 308, 
-                                289, 468, 270, 262, 426, 314, 260, 411, 307, 282, 382
-                                361, 257, 396, 340, 264, 396, 304, 300, 473, 267, 260, 
-                                475, 269, 256, 376, 366, 258, 423, 319, 258]))
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[
+    ...     369, 334, 297, 447, 302, 251, 409, 339, 252, 402, 
+    ...     333, 265, 399, 347, 254, 462, 277, 261, 465, 280, 
+    ...     255, 412, 313, 275, 444, 305, 251, 403, 308, 289, 
+    ...     468, 270, 262, 426, 314, 260, 411, 307, 282, 382,
+    ...     361, 257, 396, 340, 264, 396, 304, 300, 473, 267, 
+    ...     260, 475, 269, 256, 376, 366, 258, 423, 319, 258
+    ... ]))
     Bin #0: [475, 269, 256], sum=1000
     Bin #1: [473, 267, 260], sum=1000
     Bin #2: [468, 270, 262], sum=1000
@@ -117,7 +119,8 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
     Bin #18: [376, 366, 258], sum=1000
     Bin #19: [369, 334, 297], sum=1000
     """
-    return []
+    bins = binner.new_bins(len(items)//3)
+    return bins
 
 
 def local_search(binner: Binner, binsize: float, items: List[any])->BinsArray:
@@ -126,10 +129,63 @@ def local_search(binner: Binner, binsize: float, items: List[any])->BinsArray:
 
     Given a list of items and a number of bin, returns an allocation of items
     to bins such that the allocation satisfies a triplet item allocations and each triplet sum
-    is equal to the bun size. 
+    is equal to the bin size. 
     
+    >>> from prtpy import BinnerKeepingContents
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[500, 400, 100, 490, 310, 200, 470, 330, 200]))
+    Bin #0: [500, 400, 100], sum=1000
+    Bin #1: [470, 330, 200], sum=1000
+    Bin #2: [430, 310, 200], sum=1000
+
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[501, 400, 100, 490, 310, 200, 470, 330, 200]))
+    Traceback (most recent call last):
+    ...
+    NoSolutionError: No valid allocation found.
+    
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[400, 350, 250]))
+    Bin #0: [400, 350, 250], sum=1000
+    
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[500, 400, 100, 200, 300]))
+    Traceback (most recent call last):
+    ...
+    NoSolutionError: No valid allocation found.
+
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[500, 500, 500]))
+    Traceback (most recent call last):
+    ...
+    NoSolutionError: No valid allocation found.
+    
+    >>> printbins(backtrack_method(BinnerKeepingContents(), binsize=1000, items=[
+    ...     369, 334, 297, 447, 302, 251, 409, 339, 252, 402, 
+    ...     333, 265, 399, 347, 254, 462, 277, 261, 465, 280, 
+    ...     255, 412, 313, 275, 444, 305, 251, 403, 308, 289, 
+    ...     468, 270, 262, 426, 314, 260, 411, 307, 282, 382,
+    ...     361, 257, 396, 340, 264, 396, 304, 300, 473, 267, 
+    ...     260, 475, 269, 256, 376, 366, 258, 423, 319, 258
+    ... ]))
+    Bin #0: [475, 269, 256], sum=1000
+    Bin #1: [473, 267, 260], sum=1000
+    Bin #2: [468, 270, 262], sum=1000
+    Bin #3: [465, 280, 255], sum=1000
+    Bin #4: [462, 277, 261], sum=1000
+    Bin #5: [447, 302, 251], sum=1000
+    Bin #6: [444, 305, 251], sum=1000
+    Bin #7: [426, 314, 260], sum=1000
+    Bin #8: [423, 319, 258], sum=1000
+    Bin #9: [412, 313, 275], sum=1000
+    Bin #10: [411, 307, 282], sum=1000
+    Bin #11: [409, 339, 252], sum=1000
+    Bin #12: [403, 308, 289], sum=1000
+    Bin #13: [402, 333, 265], sum=1000
+    Bin #14: [399, 347, 254], sum=1000
+    Bin #15: [396, 340, 264], sum=1000
+    Bin #16: [396, 304, 300], sum=1000
+    Bin #17: [382, 361, 257], sum=1000
+    Bin #18: [376, 366, 258], sum=1000
+    Bin #19: [369, 334, 297], sum=1000
     """
-    return []
+    bins = binner.new_bins(len(items)//3)
+    return bins
 
 
 if __name__ == "__main__":

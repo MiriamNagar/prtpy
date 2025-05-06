@@ -2,11 +2,11 @@ from typing import List, Tuple
 import random
 from prtpy.binners import BinnerKeepingContents, printbins
 import logging
-from prtpy.packing.fair_backtracking import backtrack_method, local_search, NoSolutionError, NegativeValueError, IncorrectTotalValueError, InvalidInputTypeError
+from prtpy.packing.triplet_partitioning import backtrack_method, local_search, NoSolutionError, NegativeValueError, IncorrectTotalValueError, InvalidInputTypeError
 import pytest 
 
 
-Falkenauer_t = [
+Falkenauer_t_test_cases = [
     {"item_num": 60,
     "bin_size": 1000,
     "items": [
@@ -125,6 +125,34 @@ Falkenauer_t = [
     },
 ]
 
+def _generate_items_and_put_into_bins(seed: int, bin_size: int, items_num: int):
+    random.seed(seed)
+    upper_bnd: int = round(bin_size/2)
+    lower_bnd: int = round(bin_size/4)
+
+    binner = BinnerKeepingContents()
+    # Determine number of bins (1 for every 3 items)
+    numbins = items_num//3
+    bins = binner.new_bins(numbins)
+
+    item_list = []
+    for i in range(items_num//3):
+        random.seed(seed + i*2)
+        item_1 = random.randint(lower_bnd, upper_bnd)
+        random.seed(seed + i*4)
+        item_2 = random.randint(lower_bnd, upper_bnd)
+        item_3 = bin_size - (item_1 + item_2)
+        item_list.extend([item_1, item_2, item_3])
+
+        # Add items to bins
+        triplet = [item_1, item_2, item_3]
+        bin_index = i
+        for item in triplet:
+            binner.add_item_to_bin(bins, item, bin_index)
+    
+    return item_list, bins
+
+
 
 def create_random_allocatable_item_list(bin_size: int = 1000, items_num: int = 60) -> Tuple[List, BinnerKeepingContents]:
     if bin_size < 50:
@@ -137,50 +165,21 @@ def create_random_allocatable_item_list(bin_size: int = 1000, items_num: int = 6
 
     SEED = 97
 
-    random.seed(SEED)
-    upper_bnd: int = round(bin_size/2)
-    lower_bnd: int = round(bin_size/4)
-
-    binner = BinnerKeepingContents()
-    # Determine number of bins (1 for every 3 items)
-    numbins = items_num//3
-    bins = binner.new_bins(numbins)
-
-    item_list = []
-    for i in range(items_num//3):
-        random.seed(SEED + i*2)
-        item_1 = random.randint(lower_bnd, upper_bnd)
-        random.seed(SEED + i*4)
-        item_2 = random.randint(lower_bnd, upper_bnd)
-        item_3 = bin_size - (item_1 + item_2)
-        item_list.extend([item_1, item_2, item_3])
-
-        # Add items to bins
-        triplet = [item_1, item_2, item_3]
-        bin_index = i
-        for item in triplet:
-            binner.add_item_to_bin(bins, item, bin_index)
-    
-    return item_list, bins
+    return _generate_items_and_put_into_bins(SEED, bin_size, items_num)
     
 
 def create_random_not_allocatable_item_list(bin_size: int = 1000, items_num: int = 60) -> List:
+    if bin_size < 0 or items_num < 0:
+        logging.error(f"Received negative number- bin_size: {bin_size}, items_num: {items_num}")
+        return
+
     SEED = 71
 
-    random.seed(SEED)
-    upper_bnd: int = round(bin_size/2)
-    lower_bnd: int = round(bin_size/4)
-
-    item_list = []
-    for i in range(items_num//3):
-        random.seed(SEED + i*2)
-        item_1 = random.randint(lower_bnd, upper_bnd)
-        random.seed(SEED + i*4)
-        item_2 = random.randint(lower_bnd, upper_bnd)
-        item_3 = bin_size - (item_1 + item_2)
-        item_list.extend([item_1, item_2, item_3])
-    item_list[-1] += 1
-    return item_list
+    item_list, bins = _generate_items_and_put_into_bins(SEED, bin_size, items_num)
+    # add one to the last item in order to make it not allocatable
+    bins[1][-1][-1] += 1
+    item_list[-1] += 1  
+    return item_list, bins
 
 
 def check_item_list_is_valid(bin_size: int, bins: List) -> bool:
@@ -193,6 +192,20 @@ def check_item_list_is_valid(bin_size: int, bins: List) -> bool:
             return False
         
     return True
+
+
+def test_creation_random_not_allocatable_item_list():
+    bin_size = 1200
+    _, bins = create_random_not_allocatable_item_list(bin_size)
+    _ , triplets = bins  # bins = sums, Triplets list
+    assert not check_item_list_is_valid(bin_size, triplets)
+
+
+def test_creation_random_allocatable_item_list():
+    bin_size = 1200
+    _, bins = create_random_allocatable_item_list(bin_size)
+    _ , triplets = bins  # bins = sums, Triplets list
+    assert check_item_list_is_valid(bin_size, triplets)
 
 
 def test_randomized_items_packing_allocation():
@@ -212,7 +225,7 @@ def test_randomized_items_packing_allocation():
 
 def test_items_packing_allocation():
     for func in [backtrack_method, local_search]:
-        for item in Falkenauer_t:
+        for item in Falkenauer_t_test_cases:
             b_size = item["bin_size"]
             item_list = item["items"]
 
@@ -243,10 +256,3 @@ def test_invalid_input_throws_exception():
 
         with pytest.raises(IncorrectTotalValueError):
             func(BinnerKeepingContents(), binsize=1000, items=[400, 600, 200, 50])
-
-
-if __name__ == "__main__":
-    # item_list, bins = create_random_allocatable_item_list()
-    # print(item_list)
-    # print(bins)
-    test_randomized_items_packing_allocation()
