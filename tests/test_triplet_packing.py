@@ -2,7 +2,7 @@ from typing import List, Tuple
 import random
 from prtpy.binners import BinnerKeepingContents, printbins
 import logging
-from prtpy.packing.triplet_partitioning import (
+from prtpy.packing.triplet_packing import (
     backtrack_method,
     local_search,
     NoSolutionError,
