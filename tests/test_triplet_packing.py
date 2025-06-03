@@ -160,9 +160,9 @@ def _generate_items_and_put_into_bins(seed: int, bin_size: int, items_num: int):
 
     item_list = []
     for i in range(items_num // 3):
-        random.seed(seed + i * 2)
+        # random.seed(seed + i * 2)
         item_1 = random.randint(lower_bnd, upper_bnd)
-        random.seed(seed + i * 4)
+        # random.seed(seed + i * 4)
         item_2 = random.randint(lower_bnd, upper_bnd)
         item_3 = bin_size - (item_1 + item_2)
         item_list.extend([item_1, item_2, item_3])
