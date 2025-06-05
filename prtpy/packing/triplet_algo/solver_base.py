@@ -1,15 +1,20 @@
-
 # solver_base.py
-class SolverError (Exception):
+class SolverError(Exception):
     pass
+
+
 class NoSolution(SolverError):
     pass
-class ProblemTooBig (SolverError):
+
+
+class ProblemTooBig(SolverError):
     pass
+
 
 MAX_LOOPS = 1_000_000_000_000
 MAX_CASE_SECONDS = 1000.0
 BACKTRACK_CHECK_TIME_PER_LOOPS = 1000
+
 
 class BranchingChoiceStats:
     def __init__(self, apply, is_a, left, max_take, max_uses):

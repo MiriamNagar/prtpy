@@ -1,11 +1,10 @@
-
-from benchmark_maker import BenchmarkMaker 
+from benchmark_maker import BenchmarkMaker
 from clock import Clock
 
 if __name__ == "__main__":
     print("main() start!\n")
     main_start_t = Clock.elapsed()
-    
+
     # try:
     print("Performing all benchmark tests...")
     BenchmarkMaker.perform_all()
