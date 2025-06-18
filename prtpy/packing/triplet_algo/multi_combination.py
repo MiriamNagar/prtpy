@@ -1,6 +1,6 @@
 from typing import List, Tuple
 from collections import defaultdict
-from bigindex import BigIndex
+from prtpy.packing.triplet_algo.bigindex import BigIndex
 
 # from base import WeightType
 WeightType = int

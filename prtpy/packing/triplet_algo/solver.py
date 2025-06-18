@@ -1,9 +1,9 @@
 from typing import Dict, List
-from problem import Problem
-from solution import Solution
-from bigindex import BigIndex
-from levela import LevelA
-from clock import Clock
+from prtpy.packing.triplet_algo.problem import Problem
+from prtpy.packing.triplet_algo.solution import Solution
+from prtpy.packing.triplet_algo.bigindex import BigIndex
+from prtpy.packing.triplet_algo.levela import LevelA
+from prtpy.packing.triplet_algo.clock import Clock
 
 
 class Solver:
@@ -65,6 +65,7 @@ class Solver:
         level_state = LevelA(problem)
         try:
             level_state.execute_algorithm()
+            
         except Solver.Error as e:
             level_state.set_message(str(e))
         return level_state.get_answer()

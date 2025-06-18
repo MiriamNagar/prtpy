@@ -1,8 +1,8 @@
 from typing import Dict
 from collections import Counter
-from problem import Problem
-from solution import Solution
-from triplet import Triplet
+from prtpy.packing.triplet_algo.problem import Problem
+from prtpy.packing.triplet_algo.solution import Solution
+from prtpy.packing.triplet_algo.triplet import Triplet
 
 
 class SolutionChecker:

@@ -33,6 +33,12 @@ class Problem:
         self.check()
         self.check_triplet_sum(triplet_sum)
 
+    def init(self, weights: List[int], binsize: int):
+        self.weights = weights
+        self.binsize = binsize
+        self.check()
+        self.check_triplet_sum(self.binsize)
+
     def check_triplet_sum(self, triplet_sum: WeightType):
         actual = sum(self.weights)
         expected = triplet_sum * (len(self.weights) // 3)
@@ -42,6 +48,7 @@ class Problem:
             )
 
     def check(self):
+        print(f"here:::::::::::::::: {self.weights}")
         if any(w <= 0 for w in self.weights):
             raise RuntimeError(f"Non-positive weight found in: {self.weights}")
         if len(self.weights) % 3 != 0:

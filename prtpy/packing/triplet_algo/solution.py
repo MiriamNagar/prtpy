@@ -1,5 +1,5 @@
 from typing import List
-from triplet import Triplet
+from prtpy.packing.triplet_algo.triplet import Triplet
 
 
 class Solution:

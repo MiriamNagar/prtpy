@@ -7,6 +7,9 @@ class Triplet:
     def __init__(self, v1: WeightType, v2: WeightType, v3: WeightType):
         self.set(v1, v2, v3)
 
+    def get(self):
+        return self.t
+
     def a(self) -> WeightType:
         return self.t[0]
 

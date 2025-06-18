@@ -43,10 +43,11 @@ class BenchmarkMaker:
         with open(result_path, "w", newline="") as out_file:
             writer = csv.writer(out_file, delimiter=",")
             writer.writerow(header)
-            # Nvals = [60, 120, 249, 501]
-            Nvals = [60]
+            Nvals = [60, 120, 249, 501]
+            # Nvals = [60]
             for N in Nvals:
-                for index in range(1, 2):
+                # for index in range(1, 2):
+                for index in range(20):
                     # if not (N==501 and index==0):
                     #     break
                     print(f"N={N} index={index}")

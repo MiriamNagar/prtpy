@@ -1,13 +1,13 @@
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict, deque
-from problem import Problem
-from triplet import Triplet
-from solution import Solution
-from solution_checker import SolutionChecker
-from multi_combination import MultiCombination
-from bigindex import BigIndex
-from clock import Clock
-from base import (
+from prtpy.packing.triplet_algo.problem import Problem
+from prtpy.packing.triplet_algo.triplet import Triplet
+from prtpy.packing.triplet_algo.solution import Solution
+from prtpy.packing.triplet_algo.solution_checker import SolutionChecker
+from prtpy.packing.triplet_algo.multi_combination import MultiCombination
+from prtpy.packing.triplet_algo.bigindex import BigIndex
+from prtpy.packing.triplet_algo.clock import Clock
+from prtpy.packing.triplet_algo.base import (
     LEVELB_BRANCHING_TIE_ORDER,
     BACKTRACKING_POLICY,
     USE_IMPROVEMENT_HEURISTIC,
