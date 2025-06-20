@@ -1,8 +1,8 @@
 from typing import Dict
 from collections import Counter
-from problem import Problem
-from solution import Solution
-from triplet import Triplet
+from .problem import Problem
+from .solution import Solution
+from .triplet import Triplet
 
 
 class SolutionChecker:

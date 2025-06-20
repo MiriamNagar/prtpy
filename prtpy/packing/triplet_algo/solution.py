@@ -1,5 +1,5 @@
 from typing import List
-from triplet import Triplet
+from .triplet import Triplet
 
 
 class Solution:

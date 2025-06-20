@@ -12,6 +12,9 @@ from typing import List, Any
 from prtpy import outputtypes as out
 from prtpy.binners import BinsArray, Binner, printbins
 from prtpy.binners import BinnerKeepingSums, BinnerKeepingContents
+from prtpy.packing.triplet_algo.problem import Problem
+from prtpy.packing.triplet_algo.clock import Clock
+from prtpy.packing.triplet_algo.solver import Solver
 
 
 class NoSolutionError(Exception):
@@ -128,7 +131,23 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
     Bin #18: [376, 366, 258], sum=1000
     Bin #19: [369, 334, 297], sum=1000
     """
+    print(f"items:: {items}")
+    problem = Problem()
+    problem.init(items, binsize)
+
+    # t_start = Clock.elapsed()
+    result = Solver.solve(problem)
+    
+
+    # t_end = Clock.elapsed()
+    # elapsed = t_end - t_start
+    
+
     bins = binner.new_bins(len(items) // 3)
+    for bin_i, triplet in enumerate(result.solution.get_triplets()):
+        for item in triplet.get():
+            binner.add_item_to_bin(bins, item, bin_i)
+    
     return bins
 
 
