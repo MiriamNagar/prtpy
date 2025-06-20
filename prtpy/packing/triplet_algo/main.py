@@ -1,5 +1,5 @@
-from benchmark_maker import BenchmarkMaker
-from clock import Clock
+from .benchmark_maker import BenchmarkMaker
+from .clock import Clock
 
 if __name__ == "__main__":
     print("main() start!\n")

@@ -1,13 +1,12 @@
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict, deque
-from prtpy.packing.triplet_algo.problem import Problem
-from prtpy.packing.triplet_algo.triplet import Triplet
-from prtpy.packing.triplet_algo.solution import Solution
-from prtpy.packing.triplet_algo.solution_checker import SolutionChecker
-from prtpy.packing.triplet_algo.multi_combination import MultiCombination
-from prtpy.packing.triplet_algo.bigindex import BigIndex
-from prtpy.packing.triplet_algo.clock import Clock
-from prtpy.packing.triplet_algo.base import (
+from .problem import Problem
+from .triplet import Triplet
+from .solution import Solution
+from .solution_checker import SolutionChecker
+from .multi_combination import MultiCombination
+from .clock import Clock
+from .base import (
     LEVELB_BRANCHING_TIE_ORDER,
     BACKTRACKING_POLICY,
     USE_IMPROVEMENT_HEURISTIC,
@@ -47,7 +46,7 @@ class Solver:
             self.definitely_a_cardinality = 0
             self.maybe_a_cardinality = 0
             self.maybe_a_choose = 0
-            self.a_index_set_case_count = BigIndex(0)
+            self.a_index_set_case_count = 0
             self.total_step_count = 0
             self.total_branching_count = 0
             self.total_backtrack_events = 0
@@ -67,7 +66,7 @@ class Solver:
             self.total_loop_states_by_depth: Dict[int, int] = defaultdict(int)
             self.total_loop_states_by_step_counts: Dict[int, int] = defaultdict(int)
             self.success = False
-            self.a_cases_investigated = BigIndex(0)
+            self.a_cases_investigated = 0
             self.solution = Solution()
             self.winning_branches: List[Solver.BranchingChoiceStats] = []
             self.error_message = ""

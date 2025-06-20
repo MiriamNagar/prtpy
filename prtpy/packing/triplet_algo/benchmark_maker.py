@@ -1,9 +1,9 @@
 import os
 import csv
 from typing import List
-from problem import Problem
-from solver import Solver
-from clock import Clock
+from .problem import Problem
+from .levela import Solver
+from .clock import Clock
 
 
 class BenchmarkMaker:
