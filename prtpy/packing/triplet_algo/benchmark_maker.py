@@ -4,6 +4,9 @@ from typing import List
 from .problem import Problem
 from .levela import Solver
 from .clock import Clock
+import logging
+
+logger = logging.getLogger("trialgo.benchmarker")
 
 
 class BenchmarkMaker:

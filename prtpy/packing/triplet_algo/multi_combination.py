@@ -1,6 +1,8 @@
 from typing import List, Tuple
 from collections import defaultdict
-from prtpy.packing.triplet_algo.bigindex import BigIndex
+import logging
+
+logger = logging.getLogger("trialgo.multi_combination")
 
 # from base import WeightType
 WeightType = int
@@ -65,13 +67,13 @@ class MultiCombination:
 
         # print(f"ctr: {self.ctr}\n")
 
-    def get_choice_count(self, k: int) -> BigIndex:
+    def get_choice_count(self, k: int) -> int:
         if k > self.total_count:
             # return BigIndex(0)
             return 0
         return self.ctr[k][len(self.items)]
 
-    def get_single_choice(self, k: int, case_index: BigIndex) -> List[int]:
+    def get_single_choice(self, k: int, case_index: int) -> List[int]:
         if not case_index < self.ctr[k][len(self.items)]:
             # raise ValueError(f"Invalid case index: {case_index.to_decimal()} not below {self.ctr[k][len(self.items)].to_decimal()}")
             raise ValueError(

@@ -1,5 +1,9 @@
 from .benchmark_maker import BenchmarkMaker
 from .clock import Clock
+import logging
+
+logger = logging.getLogger("trialgo.main")
+
 
 if __name__ == "__main__":
     print("main() start!\n")

@@ -1,5 +1,8 @@
 from typing import List
 from .triplet import Triplet
+import logging
+
+logger = logging.getLogger("trialgo.solution")
 
 
 class Solution:

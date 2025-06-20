@@ -11,6 +11,10 @@ from .base import (
     BACKTRACKING_POLICY,
     USE_IMPROVEMENT_HEURISTIC,
 )
+import logging
+
+logger = logging.getLogger("trialgo.triplet_algo")
+
 
 # from levelc import LevelC
 

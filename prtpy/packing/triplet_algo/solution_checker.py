@@ -3,6 +3,9 @@ from collections import Counter
 from .problem import Problem
 from .solution import Solution
 from .triplet import Triplet
+import logging
+
+logger = logging.getLogger("trialgo.solution_checker")
 
 
 class SolutionChecker:

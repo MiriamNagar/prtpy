@@ -1,5 +1,7 @@
 from typing import List
+import logging
 
+logger = logging.getLogger("trialgo.binomial_coefficient")
 
 class BinomialCoefficients:
     M = 1000

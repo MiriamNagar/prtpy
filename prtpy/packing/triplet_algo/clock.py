@@ -1,5 +1,8 @@
 import time
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("trialgo.clock")
 
 
 class Clock:

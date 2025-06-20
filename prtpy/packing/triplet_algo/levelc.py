@@ -3,6 +3,9 @@ from dataclasses import dataclass, field
 from typing import Tuple, List, Set, Dict, Optional, Any
 import heapq
 import levela
+import logging
+
+logger = logging.getLogger("trialgo.heuristic")
 
 
 @dataclass

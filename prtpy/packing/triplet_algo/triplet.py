@@ -1,4 +1,7 @@
 from typing import Tuple
+import logging
+
+logger = logging.getLogger("trialgo.triplet")
 
 WeightType = int
 
