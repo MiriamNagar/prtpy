@@ -12,9 +12,8 @@ from typing import List, Any
 from prtpy import outputtypes as out
 from prtpy.binners import BinsArray, Binner, printbins
 from prtpy.binners import BinnerKeepingSums, BinnerKeepingContents
-from prtpy.packing.triplet_algo.problem import Problem
-from prtpy.packing.triplet_algo.clock import Clock
-from prtpy.packing.triplet_algo.solver import Solver
+from .triplet_algo.problem import Problem
+from .triplet_algo.levela import Solver
 
 
 class NoSolutionError(Exception):
