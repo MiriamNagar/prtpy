@@ -1,0 +1,237 @@
+from typing import List, Tuple, Set, Dict, Optional
+import heapq
+import itertools
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class TripletLocalSearch:
+    class Stats:
+        def __init__(self):
+            self.passes = 0
+            self.distance = 0
+            self.node_count = 0
+            self.saved_count = 0
+            self.skip1_count = 0
+            self.skip2_count = 0
+
+    class TripletInfo:
+        def __init__(self, triplet: Tuple[int, int, int]):
+            self.triplet = triplet
+            self.used_count = 0
+
+    class GroupInfo:
+        def __init__(self, left: int):
+            self.left = left
+            self.triplets: Set[int] = set()
+
+    class Node:
+        def __init__(self, parent: 'TripletLocalSearch', prev: Optional['TripletLocalSearch.Node'] = None,
+                     is_add: Optional[bool] = None, triplet_index: Optional[int] = None):
+            self.parent = parent
+            self.prev = prev
+            self.triplet_index = triplet_index
+            self.is_add = is_add
+            self.infeas_count = prev.infeas_count if prev else 0
+            self.extra_items = prev.extra_items if prev else 0
+            self.group_left = dict(prev.group_left) if prev else {}
+            self.triplet_used_count = dict(prev.triplet_used_count) if prev else {}
+
+            if triplet_index is not None:
+                a, b, c = parent.triplets[triplet_index].triplet
+                if is_add:
+                    self.add_triplet(triplet_index)
+                    self.add(a)
+                    self.add(b)
+                    self.add(c)
+                else:
+                    self.remove_triplet(triplet_index)
+                    self.remove(a)
+                    self.remove(b)
+                    self.remove(c)
+
+        def get_triplet_used_count(self, t: int) -> int:
+            return self.triplet_used_count.get(t, self.parent.triplets[t].used_count)
+
+        def get_group_left(self, g: int) -> int:
+            return self.group_left.get(g, self.parent.groups[g].left)
+
+        def add_triplet(self, t: int):
+            self.triplet_used_count[t] = self.get_triplet_used_count(t) + 1
+
+        def remove_triplet(self, t: int):
+            self.triplet_used_count[t] = self.get_triplet_used_count(t) - 1
+
+        def add(self, g: int):
+            current = self.group_left.get(g, self.parent.groups[g].left)
+            new_left = current - 1
+
+            if new_left < 0:
+                self.infeas_count += 1
+
+            if new_left == self.parent.groups[g].left:
+                self.group_left.pop(g, None)
+            else:
+                self.group_left[g] = new_left
+
+            self.extra_items += 1
+
+        def remove(self, g: int):
+            current = self.group_left.get(g, self.parent.groups[g].left)
+            new_left = current + 1
+
+            if new_left <= 0:
+                self.infeas_count -= 1
+
+            if new_left == self.parent.groups[g].left:
+                self.group_left.pop(g, None)
+            else:
+                self.group_left[g] = new_left
+
+            self.extra_items -= 1
+
+        def __lt__(self, other: 'TripletLocalSearch.Node'):
+            if self.infeas_count != other.infeas_count:
+                return self.infeas_count < other.infeas_count
+            if self.extra_items != other.extra_items:
+                return self.extra_items > other.extra_items
+            return sorted(self.group_left.items()) < sorted(other.group_left.items())
+
+        def __eq__(self, other):
+            return (self.infeas_count == other.infeas_count and
+                    self.extra_items == other.extra_items and
+                    self.group_left == other.group_left and
+                    self.triplet_used_count == other.triplet_used_count)
+
+        def __hash__(self):
+            return hash((
+                self.infeas_count,
+                self.extra_items,
+                frozenset(self.group_left.items()),
+                frozenset(self.triplet_used_count.items())
+            ))
+
+        def apply_solution_on_parent(self):
+            nodes = []
+            node = self
+            while node.prev is not None:
+                nodes.append(node)
+                node = node.prev
+            logger.debug(f"Applying solution of length {len(nodes)}")
+            for node in reversed(nodes):
+                a, b, c = node.parent.triplets[node.triplet_index].triplet
+                if node.is_add:
+                    node.parent.triplets[node.triplet_index].used_count += 1
+                    node.parent.groups[a].left -= 1
+                    node.parent.groups[b].left -= 1
+                    node.parent.groups[c].left -= 1
+                    logger.debug(f"Added triplet {node.triplet_index}: ({a},{b},{c})")
+                else:
+                    node.parent.triplets[node.triplet_index].used_count -= 1
+                    node.parent.groups[a].left += 1
+                    node.parent.groups[b].left += 1
+                    node.parent.groups[c].left += 1
+                    logger.debug(f"Removed triplet {node.triplet_index}: ({a},{b},{c})")
+            self.parent.stats.distance += len(nodes)
+
+    def __init__(self, orig_chosen_triplet_indices: List[int], planner_triplets: List[Tuple[int, int, int]], planner_cardinalities: List[int]):
+        logger.debug("Initializing TripletLocalSearch")
+        self.orig_chosen_triplet_indices = orig_chosen_triplet_indices
+        self.triplets: List[TripletLocalSearch.TripletInfo] = []
+        self.groups: List[TripletLocalSearch.GroupInfo] = []
+        self.stats = TripletLocalSearch.Stats()
+
+        T = len(planner_triplets)
+
+        self.triplets = [TripletLocalSearch.TripletInfo(t) for t in planner_triplets]
+        G = len(planner_cardinalities)
+        self.groups = [TripletLocalSearch.GroupInfo(card) for card in planner_cardinalities]
+
+        logger.debug(f"Total triplets: {T}, total groups: {G}")
+
+        for t_index in range(T):
+            a, b, c = self.triplets[t_index].triplet
+            self.groups[a].triplets.add(t_index)
+            self.groups[b].triplets.add(t_index)
+            self.groups[c].triplets.add(t_index)
+
+        for t_index in orig_chosen_triplet_indices:
+            self.triplets[t_index].used_count += 1
+            a, b, c = self.triplets[t_index].triplet
+            self.groups[a].left -= 1
+            self.groups[b].left -= 1
+            self.groups[c].left -= 1
+            logger.debug(f"Initial triplet {t_index} used: ({a}, {b}, {c})")
+
+    def perform(self, max_infeas_count: int, max_steps: int) -> Tuple[bool, int]:
+        logger.debug(f"Starting local search with max_infeas_count={max_infeas_count}, max_steps={max_steps}")
+        self.stats.passes += 1
+
+        counter = itertools.count()
+        nodes_all = set()
+        nodes_remaining = []
+
+        root = TripletLocalSearch.Node(self)
+        heapq.heappush(nodes_remaining, (0, next(counter), root))
+        nodes_all.add(root)
+
+        for step in range(max_steps):
+            if not nodes_remaining:
+                logger.debug("No more nodes remaining, stopping search")
+                self.stats.node_count += step + 1
+                self.stats.saved_count += len(nodes_all)
+                return False, step
+
+            _, _, node = heapq.heappop(nodes_remaining)
+
+            if node.infeas_count == 0 and node.extra_items > 0:
+                logger.debug(f"Feasible solution found at step {step}")
+                node.apply_solution_on_parent()
+                self.stats.node_count += step + 1
+                self.stats.saved_count += len(nodes_all)
+                return True, step
+
+            next_triplet_indices = set()
+            is_add = node.infeas_count == 0
+            if is_add:
+                for g in range(len(self.groups)):
+                    if node.get_group_left(g) > 0:
+                        next_triplet_indices.update(self.groups[g].triplets)
+            else:
+                for g, left in node.group_left.items():
+                    if left < 0:
+                        next_triplet_indices.update(self.groups[g].triplets)
+
+            for t in next_triplet_indices:
+                if not is_add and node.get_triplet_used_count(t) == 0:
+                    continue
+                next_node = TripletLocalSearch.Node(self, node, is_add, t)
+                if next_node.infeas_count > max_infeas_count:
+                    self.stats.skip1_count += 1
+                    continue
+                if next_node in nodes_all:
+                    self.stats.skip2_count += 1
+                    continue
+                heapq.heappush(nodes_remaining, (next_node.infeas_count, next(counter), next_node))
+                nodes_all.add(next_node)
+
+        logger.debug("Search exhausted without finding solution")
+        self.stats.node_count += max_steps
+        self.stats.saved_count += len(nodes_all)
+        return False, max_steps
+
+    def get_final_triplet_count(self) -> int:
+        return sum(t.used_count for t in self.triplets)
+
+    def get_final_triplet_indices(self) -> List[int]:
+        final_indices = []
+        for t_index, t in enumerate(self.triplets):
+            final_indices.extend([t_index] * t.used_count)
+        return final_indices
+
+    def get_final_triplets(self) -> List[Tuple[int, int, int]]:
+        return [self.triplets[t_index].triplet for t_index in self.get_final_triplet_indices()]
+
+    def get_stats(self) -> 'TripletLocalSearch.Stats':
+        return self.stats
