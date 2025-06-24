@@ -3,11 +3,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-WeightType = int
 
 class Problem:
     def __init__(self):
-        self.weights: List[WeightType] = []
+        self.weights: List[int] = []
         logger.debug("Problem instance created")
 
     def read(self, path: str):
@@ -53,7 +52,7 @@ class Problem:
         self.check()
         self.check_triplet_sum(self.binsize)
 
-    def check_triplet_sum(self, triplet_sum: WeightType):
+    def check_triplet_sum(self, triplet_sum: int):
         actual = sum(self.weights)
         expected = triplet_sum * (len(self.weights) // 3)
         logger.debug("Checking triplet sum: actual=%d, expected=%d", actual, expected)
@@ -76,7 +75,7 @@ class Problem:
             )
         logger.info("Basic weight checks passed")
 
-    def get_weights(self) -> List[WeightType]:
+    def get_weights(self) -> List[int]:
         return self.weights
 
     def get_n(self) -> int:

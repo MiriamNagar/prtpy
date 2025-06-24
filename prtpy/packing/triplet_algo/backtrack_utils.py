@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-WeightType = int
 
 # Exception used when a branch is impossible
 class BranchImpossible(Exception):

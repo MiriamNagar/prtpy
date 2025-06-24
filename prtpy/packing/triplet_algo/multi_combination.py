@@ -4,20 +4,17 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# from base import WeightType
-WeightType = int
-
 
 class MultiCombination:
     class Item:
-        def __init__(self, weight: WeightType):
+        def __init__(self, weight: int):
             self.weight = weight
             self.indices: List[int] = []
 
         def __repr__(self):
             return f"Item(weight={self.weight}, indices={self.indices})"
 
-    def __init__(self, indices: List[int] = [], weights: List[WeightType] = []):
+    def __init__(self, indices: List[int] = [], weights: List[int] = []):
         logger.debug("MultiCombination.__init__ called")
         self.items: List[MultiCombination.Item] = []
         self.total_count = 0
@@ -29,7 +26,7 @@ class MultiCombination:
         else:
             logger.debug("No indices or weights provided at init")
 
-    def init(self, indices: List[int], weights: List[WeightType]):
+    def init(self, indices: List[int], weights: List[int]):
         logger.info("Initializing MultiCombination with given indices and weights")
         if len(indices) != len(weights):
             logger.error("Indices and weights length mismatch")
