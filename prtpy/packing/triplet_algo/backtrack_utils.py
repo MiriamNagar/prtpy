@@ -28,8 +28,8 @@ class Stats:
 
 # Base step class
 class Step:
-    def __init__(self, level_b: Optional["LevelB"] = None):
-        self.level_b = level_b
+    def __init__(self, triplet_backtracker: Optional["TripletBacktracker"] = None):
+        self.triplet_backtracker = triplet_backtracker
 
     def perform(self) -> None:
         raise NotImplementedError
@@ -39,38 +39,38 @@ class Step:
 
 # Triplet-related base step
 class TripletBaseStep(Step):
-    def __init__(self, triplet_index: int, level_b: Optional["LevelB"] = None):
-        super().__init__(level_b)
+    def __init__(self, triplet_index: int, triplet_backtracker: Optional["TripletBacktracker"] = None):
+        super().__init__(triplet_backtracker)
         self.triplet_index = triplet_index
 
 # ApplyTriplet adds the triplet to the current solution
 class ApplyTriplet(TripletBaseStep):
     def perform(self) -> None:
         logger.debug("ApplyTriplet.perform: triplet_index=%d", self.triplet_index)
-        self.level_b.add_used_triplet(self.triplet_index)
-        self.level_b.chosen_triplet_indices.append(self.triplet_index)
+        self.triplet_backtracker.add_used_triplet(self.triplet_index)
+        self.triplet_backtracker.chosen_triplet_indices.append(self.triplet_index)
 
     def undo(self) -> None:
         logger.debug("ApplyTriplet.undo: triplet_index=%d", self.triplet_index)
-        self.level_b.remove_used_triplet(self.triplet_index)
-        self.level_b.chosen_triplet_indices.pop()
+        self.triplet_backtracker.remove_used_triplet(self.triplet_index)
+        self.triplet_backtracker.chosen_triplet_indices.pop()
 
 # ExcludeTriplet disables a triplet option
 class ExcludeTriplet(TripletBaseStep):
     def perform(self) -> None:
         logger.debug("ExcludeTriplet.perform: triplet_index=%d", self.triplet_index)
-        self.level_b.set_triplet_disabled(self.triplet_index)
+        self.triplet_backtracker.set_triplet_disabled(self.triplet_index)
 
     def undo(self) -> None:
         logger.debug("ExcludeTriplet.undo: triplet_index=%d", self.triplet_index)
-        self.level_b.set_triplet_enabled(self.triplet_index)
+        self.triplet_backtracker.set_triplet_enabled(self.triplet_index)
 
 # BranchingStep represents a decision point with multiple options
 class BranchingStep(Step):
     def __init__(
-        self, options: deque["LevelB.Step"], level_b: Optional["LevelB"] = None
+        self, options: deque[Step], triplet_backtracker: Optional["TripletBacktracker"] = None
     ) -> None:
-        super().__init__(level_b)
+        super().__init__(triplet_backtracker)
         self.options = options
 
         # Track for long backtracks
@@ -89,5 +89,5 @@ class BranchingStep(Step):
         self.options.popleft()
 
         self.backtrack_happened = True
-        self.step_count_backtrack = self.level_b.stats.current_step_count
+        self.step_count_backtrack = self.triplet_backtracker.stats.current_step_count
         logger.debug("Backtrack happened. Step count at backtrack: %d", self.step_count_backtrack)

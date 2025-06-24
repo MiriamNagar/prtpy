@@ -342,7 +342,7 @@ class TripletBacktracker:
 
     def add_step(self, new_step: Step) -> None:
         self.stats.current_step_count += 1
-        new_step.level_b = self
+        new_step.triplet_backtracker = self
         logger.debug(f"Adding step: {new_step.__class__.__name__} for triplet index " 
                     f"{getattr(new_step, 'triplet_index', 'N/A')}")
         new_step.perform()
@@ -352,7 +352,7 @@ class TripletBacktracker:
     def add_branching(self, options: list[Step]) -> None:
         self.stats.current_branching_count += 1
         for step in options:
-            step.level_b = self
+            step.triplet_backtracker = self
         branching_step = BranchingStep(deque(options), self)
         branching_step.step_count_start = self.stats.current_step_count
         logger.debug(f"Adding branching step with {len(options)} options")
