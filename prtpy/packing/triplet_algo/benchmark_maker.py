@@ -6,7 +6,7 @@ from .solver import Solver
 from .clock import Clock
 import logging
 
-logger = logging.getLogger("trialgo.benchmarker")
+logger = logging.getLogger(__name__)
 
 
 class BenchmarkMaker:
@@ -43,66 +43,75 @@ class BenchmarkMaker:
             "Histogram:depth",
             "Histogram:stepsizes",
         ]
+
+        logger.info("Starting benchmark, writing to %s", result_path)
+
         with open(result_path, "w", newline="") as out_file:
             writer = csv.writer(out_file, delimiter=",")
             writer.writerow(header)
-            # Nvals = [60, 120, 249, 501]
-            Nvals = [60, 501]
+
+            Nvals = [60, 120, 249, 501]
             for N in Nvals:
-                for index in range(1, 2):
-                # for index in range(20):
-                    # if not (N==501 and index==0):
-                    #     break
-                    print(f"N={N} index={index}")
+                for index in range(20):
                     path = f"prtpy/packing/triplet_algo/Falkenauer_T/Falkenauer_t{N}_{index:02d}.txt"
-                    problem = Problem()
-                    problem.read_benchmark_format(path)
+                    logger.info("Running benchmark for N=%d index=%d", N, index)
 
-                    t_start = Clock.elapsed()
-                    answer = Solver.solve(problem)
-                    t_end = Clock.elapsed()
-                    elapsed = t_end - t_start
+                    try:
+                        problem = Problem()
+                        problem.read_benchmark_format(path)
 
-                    def map_to_string(m):
-                        return "".join(f" [{k}: {v}]" for k, v in m.items())
+                        t_start = Clock.elapsed()
+                        answer = Solver.solve(problem)
+                        t_end = Clock.elapsed()
+                        elapsed = t_end - t_start
 
-                    def winning_branches_str(wb, long_format):
-                        out = ""
-                        for b in wb:
-                            out += "1" if b.apply else "0"
-                            if long_format:
-                                out += f"({'A' if b.is_a else 'x'}, {b.left}/{b.max_take}|{b.max_uses})"
-                        return out
+                        def map_to_string(m):
+                            return "".join(f" [{k}: {v}]" for k, v in m.items())
 
-                    row = [
-                        N,
-                        index,
-                        elapsed,
-                        answer.preprocess_triplet_count,
-                        answer.T,
-                        answer.G,
-                        answer.definitely_a_cardinality,
-                        answer.maybe_a_cardinality,
-                        answer.maybe_a_choose,
-                        answer.a_index_set_case_count,
-                        answer.a_cases_investigated,
-                        answer.total_step_count,
-                        answer.total_branching_count,
-                        answer.total_backtrack_events,
-                        answer.total_loops,
-                        answer.improvement_passes,
-                        answer.improvement_distance,
-                        answer.improvement_node_count,
-                        answer.improvement_saved_count,
-                        answer.improvement_skip1_count,
-                        answer.improvement_skip2_count,
-                        answer.success,
-                        answer.error_message,
-                        answer.solution,
-                        winning_branches_str(answer.winning_branches, False),
-                        winning_branches_str(answer.winning_branches, True),
-                        map_to_string(answer.total_loop_states_by_depth),
-                        map_to_string(answer.total_loop_states_by_step_counts),
-                    ]
-                    writer.writerow(row)
-                    out_file.flush()
+                        def winning_branches_str(wb, long_format):
+                            out = ""
+                            for b in wb:
+                                out += "1" if b.apply else "0"
+                                if long_format:
+                                    out += f"({'A' if b.is_a else 'x'}, {b.left}/{b.max_take}|{b.max_uses})"
+                            return out
+
+                        row = [
+                            N,
+                            index,
+                            elapsed,
+                            answer.preprocess_triplet_count,
+                            answer.T,
+                            answer.G,
+                            answer.definitely_a_cardinality,
+                            answer.maybe_a_cardinality,
+                            answer.maybe_a_choose,
+                            answer.a_index_set_case_count,
+                            answer.a_cases_investigated,
+                            answer.total_step_count,
+                            answer.total_branching_count,
+                            answer.total_backtrack_events,
+                            answer.total_loops,
+                            answer.improvement_passes,
+                            answer.improvement_distance,
+                            answer.improvement_node_count,
+                            answer.improvement_saved_count,
+                            answer.improvement_skip1_count,
+                            answer.improvement_skip2_count,
+                            answer.success,
+                            answer.error_message,
+                            answer.solution,
+                            winning_branches_str(answer.winning_branches, False),
+                            winning_branches_str(answer.winning_branches, True),
+                            map_to_string(answer.total_loop_states_by_depth),
+                            map_to_string(answer.total_loop_states_by_step_counts),
+                        ]
+                        writer.writerow(row)
+                        out_file.flush()
+                        logger.info("Finished N=%d index=%d in %.3f seconds", N, index, elapsed)
+
+                    except Exception as e:
+                        logger.exception("Failed for N=%d index=%d. Error: %s", N, index, e)
+                        # Write partial failure to CSV
+                        writer.writerow([N, index, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", False, str(e), "", "", "", "", ""])
+                        out_file.flush()
