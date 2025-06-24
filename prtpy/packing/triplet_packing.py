@@ -14,6 +14,9 @@ from prtpy.binners import BinsArray, Binner, printbins
 from prtpy.binners import BinnerKeepingSums, BinnerKeepingContents
 from .triplet_algo.problem import Problem
 from .triplet_algo.solver import Solver
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class NoSolutionError(Exception):
@@ -130,17 +133,10 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
     Bin #18: [376, 366, 258], sum=1000
     Bin #19: [369, 334, 297], sum=1000
     """
-    print(f"items:: {items}")
     problem = Problem()
     problem.init(items, binsize)
 
-    # t_start = Clock.elapsed()
-    result = Solver.solve(problem)
-    
-
-    # t_end = Clock.elapsed()
-    # elapsed = t_end - t_start
-    
+    result = Solver.solve(problem)    
 
     bins = binner.new_bins(len(items) // 3)
     for bin_i, triplet in enumerate(result.solution.get_triplets()):
@@ -211,7 +207,16 @@ def local_search(binner: Binner, binsize: float, items: List[any]) -> BinsArray:
     Bin #18: [376, 366, 258], sum=1000
     Bin #19: [369, 334, 297], sum=1000
     """
+    problem = Problem()
+    problem.init(items, binsize)
+
+    result = Solver.solve(problem, use_local_search=True)    
+
     bins = binner.new_bins(len(items) // 3)
+    for bin_i, triplet in enumerate(result.solution.get_triplets()):
+        for item in triplet.get():
+            binner.add_item_to_bin(bins, item, bin_i)
+    
     return bins
 
 
