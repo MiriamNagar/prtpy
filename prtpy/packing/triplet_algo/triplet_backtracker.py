@@ -1,7 +1,7 @@
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict, deque
 from .base import (
-    LEVELB_BRANCHING_TIE_ORDER,
+    TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER,
     BACKTRACKING_POLICY,
     USE_IMPROVEMENT_HEURISTIC,
 )
@@ -17,7 +17,7 @@ WeightType = int
 from dataclasses import dataclass, field
 
 
-class LevelB:
+class TripletBacktracker:
     def __init__(self, a_index_set: List[int], tsc: TripletSearchContext):
         # from levela import LevelA # avoid circular import at module top level
         # self.level_a: LevelA = level_a
@@ -522,9 +522,9 @@ class LevelB:
         for ti in triplet_candidate_indices:
             mu = self.get_max_uses_for_triplet_index(ti)
             if (
-                (LEVELB_BRANCHING_TIE_ORDER == 0 and mu > best_mu)
+                (TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER == 0 and mu > best_mu)
                 or (mu == best_mu and ti < best_mu)
-            ) or (LEVELB_BRANCHING_TIE_ORDER == 1 and (mu > best_mu)):
+            ) or (TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER == 1 and (mu > best_mu)):
                 best_mu, best_ti = mu, ti
 
         if best_mu == 0:

@@ -7,14 +7,14 @@ from .solution_checker import SolutionChecker
 from .multi_combination import MultiCombination
 import logging
 from .models import SolverData, TripletSearchContext
-from .levelb import LevelB
+from .triplet_backtracker import TripletBacktracker
 
 logger = logging.getLogger("trialgo.triplet_algo")
 
 WeightType = int
 
 
-class LevelA:
+class TripletPlanner:
     def __init__(self, problem: Problem):
         self.orig_problem = problem
         self.answer = SolverData.Answer()
@@ -292,7 +292,7 @@ class LevelA:
             #     print(f"assumed as a: {self.orig_weights[i]}\n")
             tsc = TripletSearchContext(self.answer.total_loops, self.t_solver_start, self.group_cardinality, self.groups , self.triplets_abc, self.group_of_item)
 
-            level_backtrack = LevelB(a_index_set, tsc)
+            level_backtrack = TripletBacktracker(a_index_set, tsc)
             stats = level_backtrack.get_stats()
 
             self.answer.total_step_count += stats.current_step_count

@@ -13,7 +13,7 @@ from prtpy import outputtypes as out
 from prtpy.binners import BinsArray, Binner, printbins
 from prtpy.binners import BinnerKeepingSums, BinnerKeepingContents
 from .triplet_algo.problem import Problem
-from .triplet_algo.levela import Solver
+from .triplet_algo.solver import Solver
 
 
 class NoSolutionError(Exception):

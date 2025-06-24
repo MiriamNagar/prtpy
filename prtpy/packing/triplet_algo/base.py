@@ -7,7 +7,7 @@ WeightType = int
 # // - 0 : choose the one with the lower index
 # // - 1 : choose whichever index comes in the mixed array
 # #define LEVELB_BRANCHING_TIE_ORDER 0
-LEVELB_BRANCHING_TIE_ORDER = 0
+TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER = 0
 
 # // when the current branch is impossible:
 # // - 0 : backtrack to the previous step, and try the next branch

@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Tuple, List, Set, Dict, Optional, Any
 import heapq
-import levela
+# import triplet_planner
 import logging
 
 logger = logging.getLogger("trialgo.heuristic")
@@ -30,7 +30,7 @@ class GroupInfo:
     triplets: Set[int] = field(default_factory=set)
 
 
-class LevelC:
+class TripletRefiner:
     def __init__(
         self, orig_chosen_triplet_indices: List[int], level_a: levela.LevelA
     ) -> None:
@@ -79,8 +79,8 @@ class LevelC:
 
         def __init__(
             self,
-            parent: LevelC,
-            prev: Optional[LevelC.Node] = None,
+            parent: TripletRefiner,
+            prev: Optional[TripletRefiner.Node] = None,
             is_add: bool = False,
             triplet_index: int = 0,
         ) -> None:
@@ -111,7 +111,7 @@ class LevelC:
                     self._adjust_group(b, +1)
                     self._adjust_group(c, +1)
 
-        def __lt__(self, other: LevelC.Node) -> bool:
+        def __lt__(self, other: TripletRefiner.Node) -> bool:
             # fewer infeas, then more extra_items, then group_left dict comparison
             if self.infeas_count != other.infeas_count:
                 return self.infeas_count < other.infeas_count
@@ -151,7 +151,7 @@ class LevelC:
 
         def applySolutionOnParent(self) -> None:
             # collect path
-            path: List[LevelC.Node] = []
+            path: List[TripletRefiner.Node] = []
             node = self
             while node.prev:
                 path.append(node)
@@ -180,11 +180,11 @@ class LevelC:
         G = len(self.groups)
 
         # priority queue and membership
-        nodes_remaining: List[LevelC.Node] = []
+        nodes_remaining: List[TripletRefiner.Node] = []
         nodes_all_keys: Set[Any] = set()
 
         # helper to fingerprint a node
-        def key(n: LevelC.Node):
+        def key(n: TripletRefiner.Node):
             return (
                 n.infeas_count,
                 -n.extra_items,
@@ -193,7 +193,7 @@ class LevelC:
             )
 
         # root
-        root = LevelC.Node(self)
+        root = TripletRefiner.Node(self)
         heapq.heappush(nodes_remaining, root)
         nodes_all_keys.add(key(root))
         nodes_all_count = 1
@@ -228,7 +228,7 @@ class LevelC:
             for t in next_triplets:
                 if not is_add and node.getTripletUsedCount(t) == 0:
                     continue
-                nxt = LevelC.Node(self, node, is_add, t)
+                nxt = TripletRefiner.Node(self, node, is_add, t)
                 if nxt.infeas_count > max_infeas_count:
                     self.stats.skip1_count += 1
                     continue
