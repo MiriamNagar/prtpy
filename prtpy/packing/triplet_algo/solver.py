@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)  # module-specific logger
 
 class Solver:
     @staticmethod
-    def solve(problem: Problem) -> "Solver. Answer":
+    def solve(problem: Problem, use_local_search: bool = False) -> "Solver. Answer":
         logger.debug("Solver.solve called with problem: %s", problem)
 
         level_state = TripletPlanner(problem)
@@ -15,7 +15,7 @@ class Solver:
 
         try:
             logger.debug("Starting algorithm execution")
-            level_state.execute_algorithm()
+            level_state.execute_algorithm(use_local_search)
             logger.info("Algorithm executed successfully")
         except SolverData.Error as e:
             # logger.error("SolverData.Error encountered: %s", str(e))

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class BenchmarkMaker:
     @staticmethod
-    def perform_all():
+    def perform_all(use_local_search: bool = False):
         result_path = "result.csv"
         header = [
             "N",
@@ -50,9 +50,11 @@ class BenchmarkMaker:
             writer = csv.writer(out_file, delimiter=",")
             writer.writerow(header)
 
-            Nvals = [60, 120, 249, 501]
+            # Nvals = [60, 120, 249, 501]
+            Nvals = [60, 501]
             for N in Nvals:
-                for index in range(20):
+                # for index in range(20):
+                for index in range(2):
                     path = f"prtpy/packing/triplet_algo/Falkenauer_T/Falkenauer_t{N}_{index:02d}.txt"
                     logger.info("Running benchmark for N=%d index=%d", N, index)
 
@@ -61,7 +63,7 @@ class BenchmarkMaker:
                         problem.read_benchmark_format(path)
 
                         t_start = Clock.elapsed()
-                        answer = Solver.solve(problem)
+                        answer = Solver.solve(problem, use_local_search)
                         t_end = Clock.elapsed()
                         elapsed = t_end - t_start
 

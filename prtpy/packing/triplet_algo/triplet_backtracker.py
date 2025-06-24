@@ -1,23 +1,17 @@
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict, deque
-from .base import (
-    TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER,
-    BACKTRACKING_POLICY,
-    USE_IMPROVEMENT_HEURISTIC,
-)
+from .base import TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER
 import logging
 from .models import SolverData, TripletInfo, GroupInfo, TripletSearchContext
 from .backtrack_utils import BranchImpossible, Stats, Step, TripletBaseStep, ApplyTriplet, ExcludeTriplet, BranchingStep
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-# level b
-WeightType = int
-from dataclasses import dataclass, field
 
 
 class TripletBacktracker:
-    def __init__(self, a_index_set: List[int], tsc: TripletSearchContext):
+    def __init__(self, a_index_set: List[int], tsc: TripletSearchContext, use_local_search: bool = False):
         self.tsc = tsc
         self.a_index_set = a_index_set
         self.stats = Stats(
@@ -33,8 +27,11 @@ class TripletBacktracker:
         self.stack: deque[Step] = deque()
 
         self.prepare()
+
+        backtrack_policy = 1 if use_local_search else 0
+        logger.info(f"backtrack policy: {backtrack_policy}")
         logger.debug("Calling execute_backtrack() from __init__")
-        self.stats.is_backtrack_successful = self.execute_backtrack()
+        self.stats.is_backtrack_successful = self.execute_backtrack(backtrack_policy)
 
     def prepare(self):
         G = len(self.tsc.groups)
@@ -125,7 +122,7 @@ class TripletBacktracker:
         logger.debug(f"Getting chosen triplet indices: {self.chosen_triplet_indices}")
         return self.chosen_triplet_indices
 
-    def execute_backtrack(self) -> bool:
+    def execute_backtrack(self, backtrack_policy: int = 0) -> bool:
         next_event_handling = 0  # next_event_handling
 
         def set_next_event():
@@ -173,12 +170,12 @@ class TripletBacktracker:
                     )
             except BranchImpossible:
                 logger.warning("BranchImpossible exception caught during backtracking")
-                if BACKTRACKING_POLICY == 0:
+                if backtrack_policy == 0:
                     logger.debug("BACKTRACKING_POLICY=0: undoing until next branch")
                     if not self.undo_until_next_branch():
                         logger.info("No more branches to undo; returning False")
                         return False
-                elif BACKTRACKING_POLICY == 1:
+                elif backtrack_policy == 1:
                     logger.info("BACKTRACKING_POLICY=1: returning False on branch impossible")
                     return False
                 else:

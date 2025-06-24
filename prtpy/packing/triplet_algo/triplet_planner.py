@@ -8,12 +8,9 @@ from .multi_combination import MultiCombination
 import logging
 from .models import SolverData, TripletSearchContext
 from .triplet_backtracker import TripletBacktracker
-from .base import USE_IMPROVEMENT_HEURISTIC
 from .triplet_local_search import TripletLocalSearch
 
 logger = logging.getLogger("trialgo.triplet_algo")
-
-WeightType = int
 
 
 class TripletPlanner:
@@ -28,10 +25,10 @@ class TripletPlanner:
 
         self.definitely_a_indices: List[int] = []
         self.groups: List[deque[int]] = []
-        self.weight_of_group: List[WeightType] = []
+        self.weight_of_group: List[int] = []
         self.group_cardinality: List[int] = []
         self.group_of_item: List[int] = []
-        self.weight_map_desc: Dict[WeightType, List[int]] = defaultdict(list)
+        self.weight_map_desc: Dict[int, List[int]] = defaultdict(list)
         self.triplets_abc_theoretical: List[Tuple[int, int, int]] = []
         self.triplets_abc: List[Tuple[int, int, int]] = []
         self.preprocess_triplets: List[Tuple[int, int, int]] = []
@@ -41,14 +38,14 @@ class TripletPlanner:
         self.algorithm_chosen_triplets: List[Tuple[int, int, int]] = []
         self.improvement_chosen_triplets: List[Tuple[int, int, int]] = []
 
-    def execute_algorithm(self):
+    def execute_algorithm(self, use_local_search: bool = False):
         logger.debug("Starting execute_algorithm")
         self.calculate_basic_data()
         self.calculate_equal_groups()
         self.calculate_triplet_abc()
         self.preprocess()
         self.calculate_possibles()
-        self.perform_backtrack_level()
+        self.perform_backtrack_level(use_local_search)
         self.finalize_solution()
         self.post_check()
         logger.debug("Finished execute_algorithm")
@@ -274,7 +271,7 @@ class TripletPlanner:
         self.G = len(self.groups)
         logger.debug(f"T (triplets count): {self.T}, G (groups count): {self.G}")
 
-    def perform_backtrack_level(self):
+    def perform_backtrack_level(self, use_local_search: bool = False):
         logger.debug("Starting perform_backtrack_level")
         for bi in range(self.answer.a_index_set_case_count):
             case_index = bi
@@ -298,7 +295,7 @@ class TripletPlanner:
                 self.group_of_item,
             )
 
-            level_backtrack = TripletBacktracker(a_index_set, tsc)
+            level_backtrack = TripletBacktracker(a_index_set, tsc, use_local_search)
             stats = level_backtrack.get_stats()
             logger.debug(f"Backtrack stats: {stats}")
 
@@ -324,9 +321,9 @@ class TripletPlanner:
                 self.algorithm_chosen_triplets = level_backtrack.get_chosen_triplets()
                 return
 
-            logger.debug("Backtrack failed, trying improvement heuristic" if USE_IMPROVEMENT_HEURISTIC else "Skipping heuristic")
+            logger.debug("Backtrack failed, trying improvement heuristic" if use_local_search else "Skipping heuristic")
 
-            if not USE_IMPROVEMENT_HEURISTIC:
+            if not use_local_search:
                 continue
 
             logger.debug("Running improvement heuristic")
