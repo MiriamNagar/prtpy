@@ -4,11 +4,11 @@ import logging
 import sys
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    stream=sys.stdout,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     stream=sys.stdout,
+#     format="%(asctime)s - %(levelname)s - %(message)s",
+# )
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

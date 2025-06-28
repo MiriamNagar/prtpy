@@ -133,16 +133,19 @@ def backtrack_method(binner: Binner, binsize: float, items: List[Any]) -> BinsAr
     Bin #18: [376, 366, 258], sum=1000
     Bin #19: [369, 334, 297], sum=1000
     """
+    logger.info(f"Starting backtrack_method with {len(items)} items and bin size {binsize}")
     problem = Problem()
     problem.init(items, binsize)
 
-    result = Solver.solve(problem)    
+    logger.info("Problem initialized. Solving with backtracking...")
+    result = Solver.solve(problem)
 
     bins = binner.new_bins(len(items) // 3)
+    logger.info("Creating bins and assigning triplets...")
     for bin_i, triplet in enumerate(result.solution.get_triplets()):
         for item in triplet.get():
             binner.add_item_to_bin(bins, item, bin_i)
-    
+    logger.info(f"Backtrack solution completed with {len(bins)} bins.")
     return bins
 
 
@@ -207,21 +210,27 @@ def local_search(binner: Binner, binsize: float, items: List[any]) -> BinsArray:
     Bin #18: [376, 366, 258], sum=1000
     Bin #19: [369, 334, 297], sum=1000
     """
+    logger.info(f"Starting local_search with {len(items)} items and bin size {binsize}")
     problem = Problem()
     problem.init(items, binsize)
 
-    result = Solver.solve(problem, use_local_search=True)    
+    logger.info("Problem initialized. Solving with local search...")
+    result = Solver.solve(problem, use_local_search=True)
 
     bins = binner.new_bins(len(items) // 3)
+    logger.info("Creating bins and assigning triplets...")
     for bin_i, triplet in enumerate(result.solution.get_triplets()):
         for item in triplet.get():
             binner.add_item_to_bin(bins, item, bin_i)
-    
+    logger.info(f"Local search completed with {len(bins)} bins.")
     return bins
 
 
 if __name__ == "__main__":
     import doctest
 
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logger.info("Running doctests for triplet algorithms...")
     (failures, tests) = doctest.testmod(report=True)
+    logger.info(f"Testing complete: {failures} failures, {tests} tests")
     print("{} failures, {} tests".format(failures, tests))
