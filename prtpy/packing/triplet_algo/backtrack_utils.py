@@ -13,6 +13,7 @@ class BranchImpossible(Exception):
 
     Used to signal that the current choice cannot lead to a solution.
     """
+
     pass
 
 
@@ -141,9 +142,7 @@ class BranchingStep(Step):
         backtrack_happened (bool): Flag indicating if backtracking occurred in this branch.
     """
 
-    def __init__(
-        self, options: deque[Step], triplet_backtracker: Optional["TripletBacktracker"] = None
-    ) -> None:
+    def __init__(self, options: deque[Step], triplet_backtracker: Optional["TripletBacktracker"] = None) -> None:
         super().__init__(triplet_backtracker)
         self.options = options
 
@@ -165,9 +164,7 @@ class BranchingStep(Step):
         Undo the last performed option and remove it from options queue.
         Mark that backtracking happened and record step count.
         """
-        logger.debug(
-            "BranchingStep.undo: undoing current option, remaining options=%d", len(self.options)
-        )
+        logger.debug("BranchingStep.undo: undoing current option, remaining options=%d", len(self.options))
         self.options[0].undo()
         self.options.popleft()
 

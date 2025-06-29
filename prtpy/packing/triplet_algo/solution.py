@@ -22,7 +22,7 @@ class Solution:
     def __init__(self):
         """
         Initializes an empty Solution instance.
-        
+
         >>> sol = Solution()
         >>> sol.get_triplets()
         []

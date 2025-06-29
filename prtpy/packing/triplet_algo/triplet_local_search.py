@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class TripletLocalSearch:
     """
     Performs a local search algorithm to optimize a selection of triplets
@@ -26,6 +27,7 @@ class TripletLocalSearch:
 
     class Stats:
         """Holds statistics about the local search process."""
+
         def __init__(self):
             self.passes = 0
             self.distance = 0
@@ -36,12 +38,14 @@ class TripletLocalSearch:
 
     class TripletInfo:
         """Holds triplet data and how many times it is currently used."""
+
         def __init__(self, triplet: Tuple[int, int, int]):
             self.triplet = triplet
             self.used_count = 0
 
     class GroupInfo:
         """Holds group capacity and list of triplets referencing this group."""
+
         def __init__(self, left: int):
             self.left = left
             self.triplets: Set[int] = set()
@@ -53,8 +57,14 @@ class TripletLocalSearch:
         Nodes track changes from a parent node by either adding or removing
         a triplet and updating group usage accordingly.
         """
-        def __init__(self, parent: 'TripletLocalSearch', prev: Optional['TripletLocalSearch.Node'] = None,
-                     is_add: Optional[bool] = None, triplet_index: Optional[int] = None):
+
+        def __init__(
+            self,
+            parent: "TripletLocalSearch",
+            prev: Optional["TripletLocalSearch.Node"] = None,
+            is_add: Optional[bool] = None,
+            triplet_index: Optional[int] = None,
+        ):
             self.parent = parent
             self.prev = prev
             self.triplet_index = triplet_index
@@ -106,7 +116,7 @@ class TripletLocalSearch:
 
             Returns:
                 int: Remaining allowed usages for the group, accounting for local changes.
-            
+
             >>> tls = TripletLocalSearch([], [(0, 1, 2)], [2, 2, 2])
             >>> node = TripletLocalSearch.Node(tls)
             >>> node.get_group_left(1)
@@ -125,7 +135,7 @@ class TripletLocalSearch:
 
             Args:
                 t (int): Index of the triplet to add.
-            
+
             >>> tls = TripletLocalSearch([], [(0, 1, 2)], [1, 1, 1])
             >>> node = TripletLocalSearch.Node(tls)
             >>> node.add_triplet(0)
@@ -142,7 +152,7 @@ class TripletLocalSearch:
 
             Args:
                 t (int): Index of the triplet to remove.
-            
+
             >>> tls = TripletLocalSearch([], [(0, 1, 2)], [1, 1, 1])
             >>> node = TripletLocalSearch.Node(tls)
             >>> node.add_triplet(0)
@@ -221,7 +231,7 @@ class TripletLocalSearch:
 
             self.extra_items -= 1
 
-        def __lt__(self, other: 'TripletLocalSearch.Node'):
+        def __lt__(self, other: "TripletLocalSearch.Node"):
             """
             Defines the priority of nodes in the priority queue.
 
@@ -249,10 +259,12 @@ class TripletLocalSearch:
             Returns:
                 bool: True if the nodes are equal.
             """
-            return (self.infeas_count == other.infeas_count and
-                    self.extra_items == other.extra_items and
-                    self.group_left == other.group_left and
-                    self.triplet_used_count == other.triplet_used_count)
+            return (
+                self.infeas_count == other.infeas_count
+                and self.extra_items == other.extra_items
+                and self.group_left == other.group_left
+                and self.triplet_used_count == other.triplet_used_count
+            )
 
         def __hash__(self):
             """
@@ -264,12 +276,14 @@ class TripletLocalSearch:
             Returns:
                 int: Hash value.
             """
-            return hash((
-                self.infeas_count,
-                self.extra_items,
-                frozenset(self.group_left.items()),
-                frozenset(self.triplet_used_count.items())
-            ))
+            return hash(
+                (
+                    self.infeas_count,
+                    self.extra_items,
+                    frozenset(self.group_left.items()),
+                    frozenset(self.triplet_used_count.items()),
+                )
+            )
 
         def apply_solution_on_parent(self):
             """
@@ -300,7 +314,12 @@ class TripletLocalSearch:
                     logger.debug(f"Removed triplet {node.triplet_index}: ({a},{b},{c})")
             self.parent.stats.distance += len(nodes)
 
-    def __init__(self, orig_chosen_triplet_indices: List[int], planner_triplets: List[Tuple[int, int, int]], planner_cardinalities: List[int]):
+    def __init__(
+        self,
+        orig_chosen_triplet_indices: List[int],
+        planner_triplets: List[Tuple[int, int, int]],
+        planner_cardinalities: List[int],
+    ):
         """
         Initialize the local search problem with the given triplets and cardinalities.
 
@@ -429,6 +448,6 @@ class TripletLocalSearch:
         """Return the list of selected triplets."""
         return [self.triplets[t_index].triplet for t_index in self.get_final_triplet_indices()]
 
-    def get_stats(self) -> 'TripletLocalSearch.Stats':
+    def get_stats(self) -> "TripletLocalSearch.Stats":
         """Return statistics from the last run of the local search."""
         return self.stats

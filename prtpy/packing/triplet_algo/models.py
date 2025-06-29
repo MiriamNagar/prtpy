@@ -23,14 +23,17 @@ class SolverData:
 
     class Error(Exception):
         """Base exception class for solver errors."""
+
         pass
 
     class NoSolution(Error):
         """Raised when no valid solution is found."""
+
         pass
 
     class ProblemTooBig(Error):
         """Raised when the problem size exceeds solver limits."""
+
         pass
 
     class BranchingChoiceStats:
@@ -44,6 +47,7 @@ class SolverData:
             max_take (int): Max items taken in this branch.
             max_uses (int): Max times this branch can be used.
         """
+
         def __init__(self, apply, is_a, left, max_take, max_uses):
             self.apply = apply
             self.is_a = is_a
@@ -84,6 +88,7 @@ class SolverData:
             winning_branches (List[BranchingChoiceStats]): Details on branches leading to solution success.
             error_message (str): Any error message generated during solving.
         """
+
         def __init__(self):
             self.preprocess_triplet_count = 0
             self.definitely_a_cardinality = 0

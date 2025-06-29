@@ -162,8 +162,36 @@ class BenchmarkMaker:
                     except Exception as e:
                         logger.exception("Failed for N=%d index=%d. Error: %s", N, index, e)
                         # Write partial failure to CSV
-                        writer.writerow([
-                            N, index, "", "", "", "", "", "", "", "", "", "", "", "", "",
-                            "", "", "", "", "", "", False, str(e), "", "", "", "", ""
-                        ])
+                        writer.writerow(
+                            [
+                                N,
+                                index,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                False,
+                                str(e),
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                            ]
+                        )
                         out_file.flush()

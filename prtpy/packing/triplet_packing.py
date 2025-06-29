@@ -12,8 +12,8 @@ from typing import List, Any
 from prtpy import outputtypes as out
 from prtpy.binners import BinsArray, Binner, printbins
 from prtpy.binners import BinnerKeepingSums, BinnerKeepingContents
-from .triplet_algo.problem import Problem
-from .triplet_algo.solver import Solver
+from prtpy.packing.triplet_algo.problem import Problem
+from prtpy.packing.triplet_algo.solver import Solver
 import logging
 
 logger = logging.getLogger(__name__)
@@ -49,9 +49,7 @@ class IncorrectTotalValueError(ValueError):
     """
 
     def __init__(self, actual_total, expected_total):
-        message = (
-            f"Incorrect total value: expected {expected_total}, but got {actual_total}."
-        )
+        message = f"Incorrect total value: expected {expected_total}, but got {actual_total}."
         super().__init__(message)
 
 

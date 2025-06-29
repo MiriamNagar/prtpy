@@ -60,6 +60,7 @@ class MultiCombination:
             >>> repr(item)
             'Item(weight=3, indices=[10, 11])'
         """
+
         def __init__(self, weight: int):
             self.weight = weight
             self.indices: List[int] = []
@@ -219,9 +220,7 @@ class MultiCombination:
         max_index = self.ctr[k][len(self.items)]
         if not case_index < max_index:
             logger.error(f"Invalid case_index={case_index} >= max_index={max_index}")
-            raise ValueError(
-                f"Invalid case index: {case_index} not below {max_index}"
-            )
+            raise ValueError(f"Invalid case index: {case_index} not below {max_index}")
 
         result = []
         b = len(self.items)

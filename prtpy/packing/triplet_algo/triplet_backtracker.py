@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
+
 class TripletBacktracker:
     """
     Implements a backtracking algorithm to assign triplets (a, b, c) into groups
@@ -28,9 +29,7 @@ class TripletBacktracker:
     def __init__(self, a_index_set: List[int], tsc: TripletSearchContext, use_local_search: bool = False):
         self.tsc = tsc
         self.a_index_set = a_index_set
-        self.stats = Stats(
-            SolverData.MAX_LOOPS - self.tsc.total_loops, self.tsc.t_solver_start
-        )
+        self.stats = Stats(SolverData.MAX_LOOPS - self.tsc.total_loops, self.tsc.t_solver_start)
         logger.debug(f"Initializing TripletBacktracker with {len(a_index_set)} a_indices")
         self.triplets: list[TripletInfo] = []
         self.triplet_states: List[Dict[str, int]] = []
@@ -57,17 +56,12 @@ class TripletBacktracker:
         G = len(self.tsc.groups)
         logger.debug(f"Preparing TripletBacktracker with {G} groups")
 
-        self.groups: list[GroupInfo] = [
-            GroupInfo(left_a=0, left_bc=self.tsc.group_cardinality[g])
-            for g in range(G)
-        ]
+        self.groups: list[GroupInfo] = [GroupInfo(left_a=0, left_bc=self.tsc.group_cardinality[g]) for g in range(G)]
         self.take_options_a = [0] * G
         self.take_options_bc = [0] * G
 
         T = len(self.tsc.triplets_abc)
-        self.triplets: list[TripletInfo] = [
-            TripletInfo(triplet=(0, 0, 0)) for _ in range(T)
-        ]
+        self.triplets: list[TripletInfo] = [TripletInfo(triplet=(0, 0, 0)) for _ in range(T)]
 
         for t in range(T):
             self.triplets[t].triplet = self.tsc.triplets_abc[t]
@@ -80,7 +74,9 @@ class TripletBacktracker:
             g = self.tsc.group_of_item[a_idx]
             self.groups[g].left_a += 1
             self.groups[g].left_bc -= 1
-        logger.debug(f"Group counts after initial counts: {[{'left_a': g.left_a, 'left_bc': g.left_bc} for g in self.groups]}")
+        logger.debug(
+            f"Group counts after initial counts: {[{'left_a': g.left_a, 'left_bc': g.left_bc} for g in self.groups]}"
+        )
 
         for t in range(T):
             a, b, c = self.triplets[t].triplet
@@ -88,27 +84,23 @@ class TripletBacktracker:
             self.triplets[t].index_of_available = len(self.available_triplet_indices)
             self.available_triplet_indices.append(t)
 
-            self.triplets[t].index_of_available_a = len(
-                self.groups[a].available_triplet_indices_a
-            )
+            self.triplets[t].index_of_available_a = len(self.groups[a].available_triplet_indices_a)
             self.groups[a].available_triplet_indices_a.append(t)
 
-            self.triplets[t].index_of_available_b = len(
-                self.groups[b].available_triplet_indices_bc
-            )
+            self.triplets[t].index_of_available_b = len(self.groups[b].available_triplet_indices_bc)
             self.groups[b].available_triplet_indices_bc.append(t)
 
             if self.triplets[t].equal_bc:
                 continue
 
-            self.triplets[t].index_of_available_c = len(
-                self.groups[c].available_triplet_indices_bc
-            )
+            self.triplets[t].index_of_available_c = len(self.groups[c].available_triplet_indices_bc)
             self.groups[c].available_triplet_indices_bc.append(t)
 
         logger.debug(f"Available triplet indices prepared: {self.available_triplet_indices}")
         for idx, group in enumerate(self.groups):
-            logger.debug(f"Group {idx}: available_triplet_indices_a={group.available_triplet_indices_a}, available_triplet_indices_bc={group.available_triplet_indices_bc}")
+            logger.debug(
+                f"Group {idx}: available_triplet_indices_a={group.available_triplet_indices_a}, available_triplet_indices_bc={group.available_triplet_indices_bc}"
+            )
 
     def is_solution(self) -> bool:
         """
@@ -118,7 +110,9 @@ class TripletBacktracker:
             bool: True if number of chosen triplets equals number of required a-indices.
         """
         is_sol = len(self.chosen_triplet_indices) == len(self.a_index_set)
-        logger.debug(f"is_solution check: {is_sol} ({len(self.chosen_triplet_indices)} chosen vs {len(self.a_index_set)})")
+        logger.debug(
+            f"is_solution check: {is_sol} ({len(self.chosen_triplet_indices)} chosen vs {len(self.a_index_set)})"
+        )
         return is_sol
 
     def analyze_solution(self):
@@ -134,7 +128,9 @@ class TripletBacktracker:
                 logger.debug(f".Exc: {a},{b},{c}")
             elif isinstance(step, BranchingStep):
                 if step.backtrack_happened:
-                    logger.debug(f"Backtrack range: {step.step_count_start} - {step.step_count_backtrack} | length: {step.step_count_backtrack - step.step_count_start}")
+                    logger.debug(
+                        f"Backtrack range: {step.step_count_start} - {step.step_count_backtrack} | length: {step.step_count_backtrack - step.step_count_start}"
+                    )
                     s = step.options[-1]  # last one was the excluded
                     a, b, c = self.triplets[s.triplet_index].triplet
                     logger.debug(f"BExc: {a},{b},{c}")
@@ -182,9 +178,7 @@ class TripletBacktracker:
                 logger.debug(f"Reached next event loop count: {self.stats.current_loops}")
                 if self.stats.current_loops == self.stats.max_loops:
                     logger.error(f"Timeout reached at loop count: {self.stats.current_loops}")
-                    raise SolverData.ProblemTooBig(
-                        f"Timeout: branching loop count: {self.stats.current_loops}"
-                    )
+                    raise SolverData.ProblemTooBig(f"Timeout: branching loop count: {self.stats.current_loops}")
             elapsed = SolverData.get_current_time() - self.stats.t_solver_start
             logger.debug(f"Elapsed time: {elapsed:.2f}s")
             if elapsed > SolverData.MAX_CASE_SECONDS:
@@ -210,9 +204,7 @@ class TripletBacktracker:
                     and self.stats.current_branching_count == orig_branching_count
                 ):
                     logger.warning("No changes added to stack in branching loop.")
-                    raise SolverData.NoSolution(
-                        "No changes added to stack in branching loop."
-                    )
+                    raise SolverData.NoSolution("No changes added to stack in branching loop.")
             except BranchImpossible:
                 logger.warning("BranchImpossible exception caught during backtracking")
                 if backtrack_policy == 0:
@@ -225,9 +217,7 @@ class TripletBacktracker:
                     return False
                 else:
                     logger.error("Invalid BACKTRACKING_POLICY encountered")
-                    raise SolverData.NoSolution(
-                        "Implementation error: invalid BACKTRACKING_POLICY."
-                    )
+                    raise SolverData.NoSolution("Implementation error: invalid BACKTRACKING_POLICY.")
 
             self.stats.current_loops += 1
             depth = len(self.a_index_set) - len(self.chosen_triplet_indices)
@@ -358,9 +348,7 @@ class TripletBacktracker:
             self.available_triplet_indices[t_info.index_of_available] = triplet_index
             self.triplets[other].index_of_available = len(self.available_triplet_indices)
             self.available_triplet_indices.append(other)
-            logger.debug(
-                f"Swapped triplet {triplet_index} with {other} in available_triplet_indices"
-            )
+            logger.debug(f"Swapped triplet {triplet_index} with {other} in available_triplet_indices")
 
         a, b, c = t_info.triplet
 
@@ -393,9 +381,7 @@ class TripletBacktracker:
             else:
                 self.triplets[other].index_of_available_c = len(self.groups[b].available_triplet_indices_bc)
             self.groups[b].available_triplet_indices_bc.append(other)
-            logger.debug(
-                f"Swapped triplet {triplet_index} with {other} in group {b}'s available_triplet_indices_bc"
-            )
+            logger.debug(f"Swapped triplet {triplet_index} with {other} in group {b}'s available_triplet_indices_bc")
 
         # Handle group a
         if t_info.index_of_available_a == len(self.groups[a].available_triplet_indices_a):
@@ -406,9 +392,8 @@ class TripletBacktracker:
             self.groups[a].available_triplet_indices_a[t_info.index_of_available_a] = triplet_index
             self.triplets[other].index_of_available_a = len(self.groups[a].available_triplet_indices_a)
             self.groups[a].available_triplet_indices_a.append(other)
-            logger.debug(
-                f"Swapped triplet {triplet_index} with {other} in group {a}'s available_triplet_indices_a"
-            )
+            logger.debug(f"Swapped triplet {triplet_index} with {other} in group {a}'s available_triplet_indices_a")
+
     def get_max_uses_for_triplet_index(self, triplet_index: int) -> int:
         """
         Calculates the maximum number of times the given triplet can be used
@@ -423,11 +408,7 @@ class TripletBacktracker:
         info = self.triplets[triplet_index]
         a, b, c = info.triplet
         left_a = self.groups[a].left_a
-        left_bc = (
-            self.groups[b].left_bc // 2
-            if info.equal_bc
-            else min(self.groups[b].left_bc, self.groups[c].left_bc)
-        )
+        left_bc = self.groups[b].left_bc // 2 if info.equal_bc else min(self.groups[b].left_bc, self.groups[c].left_bc)
         max_uses = min(left_a, left_bc)
         logger.debug(
             f"Max uses for triplet {triplet_index} ({a},{b},{c}): "
@@ -449,8 +430,10 @@ class TripletBacktracker:
         """
         self.stats.current_step_count += 1
         new_step.triplet_backtracker = self
-        logger.debug(f"Adding step: {new_step.__class__.__name__} for triplet index " 
-                    f"{getattr(new_step, 'triplet_index', 'N/A')}")
+        logger.debug(
+            f"Adding step: {new_step.__class__.__name__} for triplet index "
+            f"{getattr(new_step, 'triplet_index', 'N/A')}"
+        )
         new_step.perform()
         self.stack.append(new_step)
         logger.debug(f"Step added. Current stack size: {len(self.stack)}")
@@ -553,7 +536,9 @@ class TripletBacktracker:
             if not self.groups[a].left_a:
                 continue
 
-            if best_group_which == 0 or ((best_ratio[0] * self.take_options_a[a]) < (self.groups[a].left_a * best_ratio[1])):
+            if best_group_which == 0 or (
+                (best_ratio[0] * self.take_options_a[a]) < (self.groups[a].left_a * best_ratio[1])
+            ):
                 best_group_which, best_group_index = 1, a
                 best_ratio = (self.groups[a].left_a, self.take_options_a[a])
                 logger.debug(f"Best group updated to A-index {a} with ratio {best_ratio}")
@@ -561,7 +546,9 @@ class TripletBacktracker:
         for bc in range(G):
             if not self.groups[bc].left_bc:
                 continue
-            if best_group_which == 0 or ((best_ratio[0] * self.take_options_bc[bc]) < (self.groups[bc].left_bc * best_ratio[1])):
+            if best_group_which == 0 or (
+                (best_ratio[0] * self.take_options_bc[bc]) < (self.groups[bc].left_bc * best_ratio[1])
+            ):
                 best_group_which, best_group_index = 2, bc
                 best_ratio = (self.groups[bc].left_bc, self.take_options_bc[bc])
                 logger.debug(f"Best group updated to BC-index {bc} with ratio {best_ratio}")
@@ -582,8 +569,7 @@ class TripletBacktracker:
         for ti in triplet_candidate_indices:
             mu = self.get_max_uses_for_triplet_index(ti)
             if (
-                (TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER == 0 and mu > best_mu)
-                or (mu == best_mu and ti < best_mu)
+                (TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER == 0 and mu > best_mu) or (mu == best_mu and ti < best_mu)
             ) or (TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER == 1 and (mu > best_mu)):
                 best_mu, best_ti = mu, ti
 
@@ -597,9 +583,7 @@ class TripletBacktracker:
             ExcludeTriplet(best_ti, self),
         ]
         self.stats.winning_branches.append(
-            SolverData.BranchingChoiceStats(
-                True, best_group_which == 1, best_ratio[0], best_ratio[1], best_mu
-            )
+            SolverData.BranchingChoiceStats(True, best_group_which == 1, best_ratio[0], best_ratio[1], best_mu)
         )
         logger.debug(f"Adding branching steps for triplet {best_ti} with max_uses {best_mu}")
         self.add_branching(steps)

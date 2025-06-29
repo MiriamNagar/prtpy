@@ -64,13 +64,13 @@ class SolutionChecker:
             >>> SolutionChecker.check(problem, solution)  # Should not raise if valid
         """
         logger.debug("Starting solution check.")
-        
+
         triplets = solution.get_triplets()
         expected_n = problem.get_n()
         actual_n = len(triplets)
-        
+
         logger.debug(f"Expected triplet count: {expected_n}, Actual triplet count: {actual_n}")
-        
+
         if expected_n != actual_n:
             error_msg = f"Triplet count mismatch: expected {expected_n}, got {actual_n}."
             logger.error(error_msg)
@@ -116,5 +116,5 @@ class SolutionChecker:
                 error_msg = f"Missing occurrences in solution: weight {w} missing {count} times."
                 logger.error(error_msg)
                 raise SolutionChecker.WrongSolution(error_msg)
-        
+
         logger.info("Solution check passed successfully.")

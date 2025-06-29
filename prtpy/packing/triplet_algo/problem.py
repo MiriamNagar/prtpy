@@ -76,13 +76,11 @@ class Problem:
 
         if len(lines) < 2:
             logger.error("Benchmark file too short: %d lines", len(lines))
-            raise RuntimeError(
-                "Benchmark file must contain at least two lines for N and triplet sum."
-            )
+            raise RuntimeError("Benchmark file must contain at least two lines for N and triplet sum.")
 
         N = lines[0]
         triplet_sum = lines[1]
-        self.weights = lines[2:2 + N]
+        self.weights = lines[2 : 2 + N]
         logger.debug("Parsed N=%d, triplet_sum=%d, weights=%s", N, triplet_sum, self.weights)
         self.check()
         self.check_triplet_sum(triplet_sum)
@@ -122,9 +120,7 @@ class Problem:
         logger.debug("Checking triplet sum: actual=%d, expected=%d", actual, expected)
         if actual != expected:
             logger.error("Triplet sum mismatch: %d vs %d", actual, expected)
-            raise RuntimeError(
-                f"Total sum mismatch, actual vs expected: {actual} vs {expected}"
-            )
+            raise RuntimeError(f"Total sum mismatch, actual vs expected: {actual} vs {expected}")
         logger.info("Triplet sum check passed")
 
     def check(self):
@@ -142,9 +138,7 @@ class Problem:
             raise RuntimeError(f"Non-positive weight found in: {self.weights}")
         if len(self.weights) % 3 != 0:
             logger.error("Weight count not divisible by 3: %d", len(self.weights))
-            raise RuntimeError(
-                f"Weight count not a multiple of three: {len(self.weights)}"
-            )
+            raise RuntimeError(f"Weight count not a multiple of three: {len(self.weights)}")
         logger.info("Basic weight checks passed")
 
     def get_weights(self) -> List[int]:

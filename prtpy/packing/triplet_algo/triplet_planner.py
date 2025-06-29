@@ -12,6 +12,7 @@ from .triplet_local_search import TripletLocalSearch
 
 logger = logging.getLogger("trialgo.triplet_algo")
 
+
 class TripletPlanner:
     """
     Orchestrates the full solution process for the triplet packing problem.
@@ -227,8 +228,10 @@ class TripletPlanner:
                 if self.group_cardinality[group] == 0:
                     continue
                 if len(occurrences[group]) == 0:
-                    msg = (f"Weight cannot be part of triplet: "
-                           f"{self.weight_of_group[group]} for desired sum {self.desired_sum}")
+                    msg = (
+                        f"Weight cannot be part of triplet: "
+                        f"{self.weight_of_group[group]} for desired sum {self.desired_sum}"
+                    )
                     logger.error(msg)
                     raise SolverData.NoSolution(msg)
                 elif len(occurrences[group]) == 1:
@@ -429,7 +432,9 @@ class TripletPlanner:
             self.answer.a_cases_investigated = case_index + 1
             self.answer.winning_branches = stats.winning_branches
 
-            level_improvement = TripletLocalSearch(level_backtrack.get_chosen_triplet_indices(), self.triplets_abc, self.group_cardinality)
+            level_improvement = TripletLocalSearch(
+                level_backtrack.get_chosen_triplet_indices(), self.triplets_abc, self.group_cardinality
+            )
             improvement_final_success = False
 
             while True:
