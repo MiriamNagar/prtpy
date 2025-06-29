@@ -3,15 +3,15 @@ from .clock import Clock
 import logging
 import sys
 
-# Configure logging
-# logging.basicConfig(
-#     level=logging.INFO,
-#     stream=sys.stdout,
-#     format="%(asctime)s - %(levelname)s - %(message)s",
-# )
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+    """
+    Entry point for running all benchmarks.
+
+    Measures and logs the total elapsed time for benchmark execution,
+    and handles any exceptions by logging error details.
+    """
     logger.info("main() start")
     main_start_t = Clock.elapsed()
 

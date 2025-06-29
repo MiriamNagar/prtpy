@@ -10,8 +10,42 @@ logger = logging.getLogger(__name__)
 
 
 class BenchmarkMaker:
+    """
+    A class for automating the benchmarking of the triplet packing solver.
+
+    This class reads benchmark input files, runs the solver, captures timing
+    and performance metrics, and writes them into a CSV file.
+
+    Methods:
+        perform_all(use_local_search: bool = False):
+            Run benchmarks for predefined problem sizes and write results to a CSV file.
+
+    CSV Columns (written per benchmark run):
+        - N: Number of weights
+        - i: Index of the benchmark instance
+        - elapsed: Total time taken
+        - prep: Number of preprocessed triplets
+        - T, G: Number of triplets/groups
+        - A:fix, A:N, A:K, A:options: Heuristic preprocessing statistics
+        - A:first, Bt:Step, Bt:Branch, Bt:Back, Bt:Loops: Backtracking statistics
+        - C:Passes, C:Dist, C:Nodes, C:Saved, C:Skip1, C:Skip2: Local search statistics
+        - OK: Whether the run was successful
+        - Error: Error message (if any)
+        - Solution: Encoded solution string
+        - WinningBranches: Short format string for chosen branches
+        - WinningBranchesLong: Detailed format for chosen branches
+        - Histogram:depth: Distribution of tree depth
+        - Histogram:stepsizes: Distribution of step sizes
+    """
+
     @staticmethod
     def perform_all(use_local_search: bool = False):
+        """
+        Run the solver on a set of benchmark problems and write results to a CSV file.
+
+        Args:
+            use_local_search (bool): Whether to apply local search after backtracking.
+        """
         result_path = "result.csv"
         header = [
             "N",
@@ -50,11 +84,10 @@ class BenchmarkMaker:
             writer = csv.writer(out_file, delimiter=",")
             writer.writerow(header)
 
-            # Nvals = [60, 120, 249, 501]
-            Nvals = [60, 501]
+            # You can modify the Nvals and range for larger-scale testing
+            Nvals = [60, 120, 249, 501]
             for N in Nvals:
-                # for index in range(20):
-                for index in range(2):
+                for index in range(20):
                     path = f"prtpy/packing/triplet_algo/Falkenauer_T/Falkenauer_t{N}_{index:02d}.txt"
                     logger.info("Running benchmark for N=%d index=%d", N, index)
 
@@ -68,9 +101,23 @@ class BenchmarkMaker:
                         elapsed = t_end - t_start
 
                         def map_to_string(m):
+                            """
+                            Convert a dictionary to a string representation.
+
+                            Args:
+                                m (dict): A dictionary.
+
+                            Returns:
+                                str: String in the format ' [key: value] ...'
+
+                            Example:
+                                >>> map_to_string({1: 3, 2: 5})
+                                ' [1: 3] [2: 5]'
+                            """
                             return "".join(f" [{k}: {v}]" for k, v in m.items())
 
                         def winning_branches_str(wb, long_format):
+                            """Format winning branches into string representation."""
                             out = ""
                             for b in wb:
                                 out += "1" if b.apply else "0"
@@ -115,5 +162,8 @@ class BenchmarkMaker:
                     except Exception as e:
                         logger.exception("Failed for N=%d index=%d. Error: %s", N, index, e)
                         # Write partial failure to CSV
-                        writer.writerow([N, index, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", False, str(e), "", "", "", "", ""])
+                        writer.writerow([
+                            N, index, "", "", "", "", "", "", "", "", "", "", "", "", "",
+                            "", "", "", "", "", "", False, str(e), "", "", "", "", ""
+                        ])
                         out_file.flush()

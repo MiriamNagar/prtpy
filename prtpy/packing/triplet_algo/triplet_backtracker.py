@@ -8,9 +8,23 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-
-
 class TripletBacktracker:
+    """
+    Implements a backtracking algorithm to assign triplets (a, b, c) into groups
+    according to cardinality constraints. Each triplet represents a valid grouping,
+    and the goal is to cover all items in `a_index_set` with valid triplet combinations.
+
+    Attributes:
+        a_index_set (List[int]): Indices representing the items of type A.
+        tsc (TripletSearchContext): Shared data and metadata for search.
+        stats (Stats): Tracks search progress and performance.
+        triplets (List[TripletInfo]): The list of available triplets.
+        triplet_states (List[Dict[str, int]]): [Unused in this version]
+        chosen_triplet_indices (List[int]): Selected triplet indices building the current solution.
+        available_triplet_indices (List[int]): Pool of currently available triplets.
+        stack (deque[Step]): Stack of actions applied in backtracking.
+    """
+
     def __init__(self, a_index_set: List[int], tsc: TripletSearchContext, use_local_search: bool = False):
         self.tsc = tsc
         self.a_index_set = a_index_set
@@ -23,7 +37,6 @@ class TripletBacktracker:
         self.chosen_triplet_indices: List[int] = []
         self.available_triplet_indices: list[int] = []
 
-        # local stacks
         self.stack: deque[Step] = deque()
 
         self.prepare()
@@ -34,6 +47,13 @@ class TripletBacktracker:
         self.stats.is_backtrack_successful = self.execute_backtrack(backtrack_policy)
 
     def prepare(self):
+        """
+        Initializes internal data structures:
+        - Sets up triplet info and group state.
+        - Builds `available_triplet_indices` and per-group triplet maps.
+
+        This method is called automatically from __init__.
+        """
         G = len(self.tsc.groups)
         logger.debug(f"Preparing TripletBacktracker with {G} groups")
 
@@ -56,7 +76,6 @@ class TripletBacktracker:
             self.triplets[t].equal_bc = b == c
             self.triplets[t].used_count = 0
 
-        # apply initial counts for groups a and bc
         for a_idx in self.a_index_set:
             g = self.tsc.group_of_item[a_idx]
             self.groups[g].left_a += 1
@@ -92,11 +111,18 @@ class TripletBacktracker:
             logger.debug(f"Group {idx}: available_triplet_indices_a={group.available_triplet_indices_a}, available_triplet_indices_bc={group.available_triplet_indices_bc}")
 
     def is_solution(self) -> bool:
+        """
+        Returns whether a complete solution has been found.
+
+        Returns:
+            bool: True if number of chosen triplets equals number of required a-indices.
+        """
         is_sol = len(self.chosen_triplet_indices) == len(self.a_index_set)
         logger.debug(f"is_solution check: {is_sol} ({len(self.chosen_triplet_indices)} chosen vs {len(self.a_index_set)})")
         return is_sol
 
     def analyze_solution(self):
+        """Log detailed breakdown of current stack steps for debugging purposes."""
         already = 0
         for step in self.stack:
             if isinstance(step, ApplyTriplet):
@@ -119,10 +145,29 @@ class TripletBacktracker:
                     logger.debug(f"BApp: {a},{b},{c} already={already}")
 
     def get_chosen_triplet_indices(self):
+        """
+        Return a list of triplet indices selected during the search.
+
+        Returns:
+            List[int]: Indices of selected triplets.
+        """
         logger.debug(f"Getting chosen triplet indices: {self.chosen_triplet_indices}")
         return self.chosen_triplet_indices
 
     def execute_backtrack(self, backtrack_policy: int = 0) -> bool:
+        """
+        Executes the main backtracking loop to find a valid solution.
+
+        Args:
+            backtrack_policy (int): 0 = keep backtracking, 1 = fail early(local search).
+
+        Returns:
+            bool: True if a solution was found, False otherwise.
+
+        Raises:
+            SolverData.ProblemTooBig: if maximum loops/time exceeded.
+            SolverData.NoSolution: if no valid solution exists.
+        """
         next_event_handling = 0  # next_event_handling
 
         def set_next_event():
@@ -192,6 +237,15 @@ class TripletBacktracker:
             logger.debug(f"Loop {self.stats.current_loops}: depth={depth}, steps_added={steps}")
 
     def add_used_triplet(self, triplet_index: int) -> None:
+        """
+        Apply the effects of using a triplet:
+        - Reduces left_a for group[a]
+        - Reduces left_bc for group[b] and group[c]
+        - Increments the used count of the triplet
+
+        Args:
+            triplet_index (int): Index of the triplet to use.
+        """
         a, b, c = self.triplets[triplet_index].triplet
         logger.debug(f"Adding used triplet {triplet_index}: ({a}, {b}, {c})")
         self.triplets[triplet_index].used_count += 1
@@ -204,6 +258,15 @@ class TripletBacktracker:
         )
 
     def remove_used_triplet(self, triplet_index: int) -> None:
+        """
+        Reverses the effects of using a triplet:
+        - Increments left_a for group[a]
+        - Increments left_bc for groups[b] and [c]
+        - Decrements the used count of the triplet
+
+        Args:
+            triplet_index (int): Index of the triplet to remove usage of.
+        """
         a, b, c = self.triplets[triplet_index].triplet
         logger.debug(f"Removing used triplet {triplet_index}: ({a}, {b}, {c})")
         self.triplets[triplet_index].used_count -= 1
@@ -216,6 +279,17 @@ class TripletBacktracker:
         )
 
     def set_triplet_disabled(self, triplet_index: int):
+        """
+        Marks a triplet as unavailable (disabled):
+        - Removes it from the available triplet lists globally and per group.
+        - Raises an error if already disabled.
+
+        Args:
+            triplet_index (int): Index of the triplet to disable.
+
+        Raises:
+            SolverData.NoSolution: If the triplet is already disabled.
+        """
         logger.debug(f"Disabling triplet {triplet_index}")
         t_info = self.triplets[triplet_index]
 
@@ -256,6 +330,17 @@ class TripletBacktracker:
                 self.triplets[last].index_of_available_c = t_info.index_of_available_c
 
     def set_triplet_enabled(self, triplet_index: int):
+        """
+        Marks a triplet as available (enabled):
+        - Adds it back to the available triplet lists globally and per group.
+        - Raises an error if already enabled.
+
+        Args:
+            triplet_index (int): Index of the triplet to enable.
+
+        Raises:
+            SolverData.NoSolution: If the triplet is already enabled.
+        """
         logger.debug(f"Enabling triplet {triplet_index}")
         t_info = self.triplets[triplet_index]
 
@@ -325,6 +410,16 @@ class TripletBacktracker:
                 f"Swapped triplet {triplet_index} with {other} in group {a}'s available_triplet_indices_a"
             )
     def get_max_uses_for_triplet_index(self, triplet_index: int) -> int:
+        """
+        Calculates the maximum number of times the given triplet can be used
+        given current group constraints.
+
+        Args:
+            triplet_index (int): Index of the triplet to evaluate.
+
+        Returns:
+            int: The maximum allowed uses of the triplet.
+        """
         info = self.triplets[triplet_index]
         a, b, c = info.triplet
         left_a = self.groups[a].left_a
@@ -341,6 +436,17 @@ class TripletBacktracker:
         return max_uses
 
     def add_step(self, new_step: Step) -> None:
+        """
+        Adds a new step to the backtracking stack and performs the step action.
+
+        Args:
+            new_step (Step): The step object to add and perform.
+
+        Effects:
+            - Increments current step count.
+            - Calls perform() on the step.
+            - Appends the step to the internal stack.
+        """
         self.stats.current_step_count += 1
         new_step.triplet_backtracker = self
         logger.debug(f"Adding step: {new_step.__class__.__name__} for triplet index " 
@@ -350,6 +456,18 @@ class TripletBacktracker:
         logger.debug(f"Step added. Current stack size: {len(self.stack)}")
 
     def add_branching(self, options: list[Step]) -> None:
+        """
+        Adds a branching step consisting of multiple options to the stack.
+
+        Args:
+            options (list[Step]): List of Step instances representing branching options.
+
+        Effects:
+            - Increments current branching count.
+            - Creates a BranchingStep from options.
+            - Performs the branching step.
+            - Appends it to the stack.
+        """
         self.stats.current_branching_count += 1
         for step in options:
             step.triplet_backtracker = self
@@ -361,6 +479,13 @@ class TripletBacktracker:
         logger.debug(f"Branching step added. Current stack size: {len(self.stack)}")
 
     def main_branching_loop(self):
+        """
+        Main loop that attempts to find and apply critical triplets by backtracking.
+        The method raises BranchImpossible if no solution can be found in the current state.
+
+        Raises:
+            BranchImpossible: When no feasible branching can be made.
+        """
         logger.debug("Starting main_branching_loop")
         G = len(self.groups)
         while True:
@@ -480,6 +605,13 @@ class TripletBacktracker:
         self.add_branching(steps)
 
     def undo_until_next_branch(self) -> bool:
+        """
+        Undo steps until the last branching step is reached and an alternative branch
+        is attempted. If no further branches remain, returns False.
+
+        Returns:
+            bool: True if an alternative branch was found and applied, False otherwise.
+        """
         self.stats.current_backtrack_events += 1
         logger.debug(f"Undoing until next branch. Current backtrack events: {self.stats.current_backtrack_events}")
 
@@ -505,10 +637,23 @@ class TripletBacktracker:
         return False
 
     def get_stats(self):
+        """
+        Retrieves the current statistics object.
+
+        Returns:
+            Stats: The stats instance tracking the backtracking state.
+        """
         logger.debug("Retrieving stats")
         return self.stats
 
     def get_chosen_triplets(self) -> List[Tuple[int, int, int]]:
+        """
+        Returns a list of triplets corresponding to the currently chosen triplet indices.
+
+        Returns:
+            List[Tuple[int, int, int]]: List of triplet tuples.
+
+        """
         triplets = [self.triplets[i].triplet for i in self.chosen_triplet_indices]
         logger.debug(f"Chosen triplets: {triplets}")
         return triplets

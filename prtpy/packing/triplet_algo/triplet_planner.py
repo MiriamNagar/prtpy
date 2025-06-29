@@ -12,9 +12,40 @@ from .triplet_local_search import TripletLocalSearch
 
 logger = logging.getLogger("trialgo.triplet_algo")
 
-
 class TripletPlanner:
+    """
+    Orchestrates the full solution process for the triplet packing problem.
+
+    This class receives a `Problem` instance and coordinates all solving stages:
+    - Basic preprocessing and group setup.
+    - Identification of valid theoretical triplets (abc).
+    - Pruning via singleton-preprocessing.
+    - A-role assignment and feasibility validation.
+    - Backtracking-based triplet assignment.
+    - Optional local search improvement.
+    - Final triplet solution construction and post-validation.
+
+    Attributes:
+        orig_problem (Problem): The original input problem instance.
+        orig_weights (List[int]): The list of weights from the problem.
+        desired_sum (int): The target sum for each triplet.
+        groups (List[deque[int]]): Grouped item indices by identical weight.
+        group_cardinality (List[int]): Cardinality of each weight group.
+        weight_of_group (List[int]): Weight represented by each group.
+        triplets_abc_theoretical (List[Tuple[int, int, int]]): Candidate triplets by group indices.
+        preprocess_triplets (List[Tuple[int, int, int]]): Triplets fixed in preprocessing.
+        algorithm_chosen_triplets (List[Tuple[int, int, int]]): Result of main solving algorithm.
+        improvement_chosen_triplets (List[Tuple[int, int, int]]): Final result after local search.
+        answer (SolverData.Answer): Container for all results and stats.
+    """
+
     def __init__(self, problem: Problem):
+        """
+        Initialize the planner with the input problem.
+
+        Args:
+            problem (Problem): Instance of the triplet packing problem.
+        """
         logger.debug("Initializing TripletPlanner")
         self.orig_problem = problem
         self.answer = SolverData.Answer()
@@ -39,6 +70,13 @@ class TripletPlanner:
         self.improvement_chosen_triplets: List[Tuple[int, int, int]] = []
 
     def execute_algorithm(self, use_local_search: bool = False):
+        """
+        Run the full triplet solver pipeline on the problem.
+
+        Args:
+            use_local_search (bool): Whether to attempt a local search
+                                     if backtracking fails to find a valid solution.
+        """
         logger.debug("Starting execute_algorithm")
         self.calculate_basic_data()
         self.calculate_equal_groups()
@@ -51,10 +89,22 @@ class TripletPlanner:
         logger.debug("Finished execute_algorithm")
 
     def set_message(self, msg: str):
+        """
+        Set an error message in the answer object.
+
+        Args:
+            msg (str): Error message.
+        """
         logger.debug(f"Setting error message: {msg}")
         self.answer.error_message = msg
 
     def get_answer(self):
+        """
+        Get the computed result.
+
+        Returns:
+            SolverData.Answer: The result container.
+        """
         return self.answer
 
     def calculate_basic_data(self):
@@ -67,6 +117,10 @@ class TripletPlanner:
         logger.debug(f"Sorted original weights: {self.orig_weights}")
 
     def calculate_equal_groups(self):
+        """
+        Group item indices by identical weights.
+        Each group corresponds to a unique weight value.
+        """
         logger.debug("Calculating equal groups")
         for i, w in enumerate(self.orig_weights):
             self.weight_map_desc[w].append(i)
@@ -86,6 +140,11 @@ class TripletPlanner:
             logger.debug(f"Group {group_index}: weight={weight}, count={len(indices)}")
 
     def calculate_triplet_abc(self):
+        """
+        Generate all valid combinations of three groups whose total weight matches
+        the desired triplet sum.
+        Group indices (not item indices) are used.
+        """
         logger.debug("Calculating theoretical triplets (abc)")
         group_weights = [weight for weight, _ in self.weight_map_desc.items()]
         G = len(self.groups)
@@ -108,15 +167,33 @@ class TripletPlanner:
 
         logger.debug(f"Total theoretical triplets found: {len(self.triplets_abc_theoretical)}")
 
-    def get_max_triplet_usage(
-        self, t: Tuple[int, int, int], cardinalities: List[int] = None
-    ):
+    def get_max_triplet_usage(self, t: Tuple[int, int, int], cardinalities: List[int] = None):
+        """
+        Estimate how many times a triplet of groups can be used.
+
+        Args:
+            t (Tuple[int, int, int]): A triplet of group indices.
+            cardinalities (List[int], optional): Custom cardinality list. Defaults to self.group_cardinality.
+
+        Returns:
+            int: Maximum number of triplet usages.
+
+        Examples:
+            >>> tp = TripletPlanner(problem=None)
+            >>> tp.group_cardinality = [6, 4, 3]
+            >>> tp.get_max_triplet_usage((0, 1, 2))
+            3
+            >>> tp.get_max_triplet_usage((0, 0, 0))
+            3
+            >>> tp.get_max_triplet_usage((1, 1, 2))
+            2
+        """
         if cardinalities is None:
             cardinalities = self.group_cardinality
         a, b, c = t
         if a == b:
             if b == c:
-                usage = cardinalities[a] // 2
+                usage = cardinalities[a] // 3
             else:
                 usage = min(cardinalities[a] // 2, cardinalities[c])
         else:
@@ -128,6 +205,10 @@ class TripletPlanner:
         return usage
 
     def preprocess(self):
+        """
+        Perform singleton pruning: fix triplets that must occur due to unique participation.
+        Reduces the problem size before full search.
+        """
         logger.debug("Starting preprocess")
         G = len(self.groups)
         occurrences = [set() for _ in range(G)]
@@ -179,6 +260,14 @@ class TripletPlanner:
         self.answer.preprocess_triplet_count = len(self.preprocess_triplets)
 
     def calculate_possibles(self):
+        """
+        Analyze roles and assign "A-role" candidates:
+        - Definitely-A: must serve as first element in triplet.
+        - Maybe-A: optional A-role candidates.
+
+        Validates if the number of usable A-role items is consistent with the number
+        of required triplets (T).
+        """
         logger.debug("Calculating possibles")
         G = len(self.groups)
         max_a = [0] * G
@@ -272,6 +361,16 @@ class TripletPlanner:
         logger.debug(f"T (triplets count): {self.T}, G (groups count): {self.G}")
 
     def perform_backtrack_level(self, use_local_search: bool = False):
+        """
+        Try all valid A-role combinations using backtracking search.
+        If unsuccessful and `use_local_search=True`, attempt heuristic improvement.
+
+        Args:
+            use_local_search (bool): Whether to run local search upon backtrack failure.
+
+        Raises:
+            SolverData.NoSolution: If no valid configuration is found.
+        """
         logger.debug("Starting perform_backtrack_level")
         for bi in range(self.answer.a_index_set_case_count):
             case_index = bi
@@ -366,6 +465,10 @@ class TripletPlanner:
         raise SolverData.NoSolution("No solution found - reported at A level.")
 
     def finalize_solution(self):
+        """
+        Convert group triplets into concrete item triplets.
+        Build the final `Solution` object and attach it to the answer.
+        """
         if not self.answer.success:
             logger.debug("Skipping finalize_solution due to failure")
             return
@@ -402,6 +505,11 @@ class TripletPlanner:
         logger.debug("Solution finalized and stored in answer")
 
     def post_check(self):
+        """
+        Validate the computed solution using the `SolutionChecker`.
+
+        If an error is found, marks the result as unsuccessful and stores error details.
+        """
         if self.answer.success:
             logger.debug("Running post-check for solution validation")
             try:

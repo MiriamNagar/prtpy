@@ -9,8 +9,28 @@ logger = logging.getLogger(__name__)
 
 
 class SolutionChecker:
+    """
+    Utility class for verifying correctness of a given solution
+    against a problem instance.
+
+    Raises WrongSolution exception if the solution is invalid.
+    """
+
     class WrongSolution(Exception):
+        """
+        Exception raised when a solution fails validation checks.
+
+        Attributes:
+            msg (str): Description of the validation failure.
+        """
+
         def __init__(self, msg: str):
+            """
+            Initialize the WrongSolution exception.
+
+            Args:
+                msg (str): Explanation of why the solution is wrong.
+            """
             self.msg = msg
             super().__init__(msg)
 
@@ -19,6 +39,30 @@ class SolutionChecker:
 
     @staticmethod
     def check(problem: Problem, solution: Solution):
+        """
+        Validates the provided solution against the problem constraints.
+
+        Checks performed:
+        - The number of triplets matches the expected count.
+        - All triplets have equal sums.
+        - The multiset of weights in the solution matches the problem's weights exactly.
+
+        Args:
+            problem (Problem): The problem instance to validate against.
+            solution (Solution): The solution to verify.
+
+        Raises:
+            WrongSolution: If any validation fails.
+
+        Example:
+            >>> from yourmodule.problem import Problem
+            >>> from yourmodule.solution import Solution
+            >>> # Assume Problem and Triplet classes have suitable constructors
+            >>> problem = Problem(...)  # Initialize appropriately
+            >>> solution = Solution()
+            >>> # Add correct triplets to solution here
+            >>> SolutionChecker.check(problem, solution)  # Should not raise if valid
+        """
         logger.debug("Starting solution check.")
         
         triplets = solution.get_triplets()
@@ -36,6 +80,7 @@ class SolutionChecker:
             logger.info("No triplets expected and none found. Solution check passed trivially.")
             return
 
+        # Check all triplets have the same sum
         target_sum = triplets[0].sum()
         logger.debug(f"Target sum for all triplets: {target_sum}")
 
@@ -49,9 +94,11 @@ class SolutionChecker:
                 logger.error(error_msg)
                 raise SolutionChecker.WrongSolution(error_msg)
 
+        # Count weights in the problem
         counter: Dict[int, int] = Counter(problem.get_weights())
         logger.debug(f"Initial weights counter: {counter}")
 
+        # Subtract weights used in the solution triplets
         for t in triplets:
             counter[t.a()] -= 1
             counter[t.b()] -= 1
@@ -59,6 +106,7 @@ class SolutionChecker:
 
         logger.debug(f"Weight counter after subtracting triplets: {counter}")
 
+        # Check for missing or extra weights
         for w, count in counter.items():
             if count < 0:
                 error_msg = f"Too many occurrences in solution: weight {w} has {-count} extra."

@@ -5,9 +5,27 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class TripletLocalSearch:
+    """
+    Performs a local search algorithm to optimize a selection of triplets
+    under group capacity constraints.
+
+    Each triplet consists of 3 group indices (a, b, c). Each group has
+    a limited number of times it can be used (its cardinality).
+
+    Given an initial selection of triplets, this class attempts to improve
+    the selection by modifying which triplets are chosen such that the
+    solution becomes feasible (no overuse of group capacities).
+
+    Attributes:
+        orig_chosen_triplet_indices: Indices of initially selected triplets.
+        triplets: List of TripletInfo objects representing all triplets.
+        groups: List of GroupInfo objects representing each group.
+        stats: Stats object holding statistics about the local search process.
+    """
+
     class Stats:
+        """Holds statistics about the local search process."""
         def __init__(self):
             self.passes = 0
             self.distance = 0
@@ -17,16 +35,24 @@ class TripletLocalSearch:
             self.skip2_count = 0
 
     class TripletInfo:
+        """Holds triplet data and how many times it is currently used."""
         def __init__(self, triplet: Tuple[int, int, int]):
             self.triplet = triplet
             self.used_count = 0
 
     class GroupInfo:
+        """Holds group capacity and list of triplets referencing this group."""
         def __init__(self, left: int):
             self.left = left
             self.triplets: Set[int] = set()
 
     class Node:
+        """
+        Represents a state in the local search tree.
+
+        Nodes track changes from a parent node by either adding or removing
+        a triplet and updating group usage accordingly.
+        """
         def __init__(self, parent: 'TripletLocalSearch', prev: Optional['TripletLocalSearch.Node'] = None,
                      is_add: Optional[bool] = None, triplet_index: Optional[int] = None):
             self.parent = parent
@@ -52,18 +78,103 @@ class TripletLocalSearch:
                     self.remove(c)
 
         def get_triplet_used_count(self, t: int) -> int:
+            """
+            Get the number of times the specified triplet has been used in this node.
+
+            Args:
+                t (int): Index of the triplet.
+
+            Returns:
+                int: The number of times the triplet is used, taking into account local changes.
+
+            >>> tls = TripletLocalSearch([], [(0, 1, 2)], [1, 1, 1])
+            >>> node = TripletLocalSearch.Node(tls)
+            >>> node.get_triplet_used_count(0)
+            0
+            >>> node.add_triplet(0)
+            >>> node.get_triplet_used_count(0)
+            1
+            """
             return self.triplet_used_count.get(t, self.parent.triplets[t].used_count)
 
         def get_group_left(self, g: int) -> int:
+            """
+            Get the remaining allowed usage (cardinality) of a group in this node.
+
+            Args:
+                g (int): Index of the group.
+
+            Returns:
+                int: Remaining allowed usages for the group, accounting for local changes.
+            
+            >>> tls = TripletLocalSearch([], [(0, 1, 2)], [2, 2, 2])
+            >>> node = TripletLocalSearch.Node(tls)
+            >>> node.get_group_left(1)
+            2
+            >>> node.add(1)
+            >>> node.get_group_left(1)
+            1
+            """
             return self.group_left.get(g, self.parent.groups[g].left)
 
         def add_triplet(self, t: int):
+            """
+            Mark a triplet as added (used) in this node.
+
+            Increments the local usage count of the triplet by 1.
+
+            Args:
+                t (int): Index of the triplet to add.
+            
+            >>> tls = TripletLocalSearch([], [(0, 1, 2)], [1, 1, 1])
+            >>> node = TripletLocalSearch.Node(tls)
+            >>> node.add_triplet(0)
+            >>> node.get_triplet_used_count(0)
+            1
+            """
             self.triplet_used_count[t] = self.get_triplet_used_count(t) + 1
 
         def remove_triplet(self, t: int):
+            """
+            Mark a triplet as removed (unused) in this node.
+
+            Decrements the local usage count of the triplet by 1.
+
+            Args:
+                t (int): Index of the triplet to remove.
+            
+            >>> tls = TripletLocalSearch([], [(0, 1, 2)], [1, 1, 1])
+            >>> node = TripletLocalSearch.Node(tls)
+            >>> node.add_triplet(0)
+            >>> node.get_triplet_used_count(0)
+            1
+            >>> node.remove_triplet(0)
+            >>> node.get_triplet_used_count(0)
+            0
+            """
             self.triplet_used_count[t] = self.get_triplet_used_count(t) - 1
 
         def add(self, g: int):
+            """
+            Apply usage of one item from group `g`.
+
+            Decrements the remaining usage (left) of the group.
+            If it goes below zero, increments `infeas_count`.
+
+            Args:
+                g (int): Index of the group to update.
+
+            >>> tls = TripletLocalSearch([], [(0, 1, 2)], [1, 1, 1])
+            >>> node = TripletLocalSearch.Node(tls)
+            >>> node.infeas_count
+            0
+            >>> node.add(0)
+            >>> node.get_group_left(0)
+            0
+            >>> node.add(0)  # overuse
+            >>> node.infeas_count
+            1
+            """
             current = self.group_left.get(g, self.parent.groups[g].left)
             new_left = current - 1
 
@@ -78,6 +189,25 @@ class TripletLocalSearch:
             self.extra_items += 1
 
         def remove(self, g: int):
+            """
+            Revert usage of one item from group `g`.
+
+            Increments the remaining usage (left) of the group.
+            If it was infeasible and now feasible, decrements `infeas_count`.
+
+            Args:
+                g (int): Index of the group to update.
+
+            >>> tls = TripletLocalSearch([], [(0, 1, 2)], [1, 1, 1])
+            >>> node = TripletLocalSearch.Node(tls)
+            >>> node.add(0)
+            >>> node.add(0)  # overuse
+            >>> node.infeas_count
+            1
+            >>> node.remove(0)
+            >>> node.infeas_count
+            0
+            """
             current = self.group_left.get(g, self.parent.groups[g].left)
             new_left = current + 1
 
@@ -92,6 +222,17 @@ class TripletLocalSearch:
             self.extra_items -= 1
 
         def __lt__(self, other: 'TripletLocalSearch.Node'):
+            """
+            Defines the priority of nodes in the priority queue.
+
+            Nodes are prioritized by:
+            1. Lower infeasibility count.
+            2. Higher number of extra items (to encourage non-trivial changes).
+            3. Lexicographical order of group_left for tie-breaking.
+
+            Returns:
+                bool: True if self < other (i.e., self has higher priority).
+            """
             if self.infeas_count != other.infeas_count:
                 return self.infeas_count < other.infeas_count
             if self.extra_items != other.extra_items:
@@ -99,12 +240,30 @@ class TripletLocalSearch:
             return sorted(self.group_left.items()) < sorted(other.group_left.items())
 
         def __eq__(self, other):
+            """
+            Equality comparison for nodes.
+
+            Two nodes are equal if their infeasibility count, extra item count,
+            group state and triplet usage are all the same.
+
+            Returns:
+                bool: True if the nodes are equal.
+            """
             return (self.infeas_count == other.infeas_count and
                     self.extra_items == other.extra_items and
                     self.group_left == other.group_left and
                     self.triplet_used_count == other.triplet_used_count)
 
         def __hash__(self):
+            """
+            Generates a unique hash based on the internal state of the node.
+
+            Ensures that nodes with same logic state hash to the same value,
+            which is critical for set membership tracking during search.
+
+            Returns:
+                int: Hash value.
+            """
             return hash((
                 self.infeas_count,
                 self.extra_items,
@@ -113,6 +272,12 @@ class TripletLocalSearch:
             ))
 
         def apply_solution_on_parent(self):
+            """
+            Applies the series of triplet additions/removals that lead from
+            the root node to this node onto the parent `TripletLocalSearch` structure.
+
+            This mutates the original triplet/group states accordingly and updates statistics.
+            """
             nodes = []
             node = self
             while node.prev is not None:
@@ -136,6 +301,14 @@ class TripletLocalSearch:
             self.parent.stats.distance += len(nodes)
 
     def __init__(self, orig_chosen_triplet_indices: List[int], planner_triplets: List[Tuple[int, int, int]], planner_cardinalities: List[int]):
+        """
+        Initialize the local search problem with the given triplets and cardinalities.
+
+        Args:
+            orig_chosen_triplet_indices: List of initially selected triplet indices.
+            planner_triplets: List of all available triplets.
+            planner_cardinalities: List of maximum capacities for each group.
+        """
         logger.debug("Initializing TripletLocalSearch")
         self.orig_chosen_triplet_indices = orig_chosen_triplet_indices
         self.triplets: List[TripletLocalSearch.TripletInfo] = []
@@ -165,6 +338,26 @@ class TripletLocalSearch:
             logger.debug(f"Initial triplet {t_index} used: ({a}, {b}, {c})")
 
     def perform(self, max_infeas_count: int, max_steps: int) -> Tuple[bool, int]:
+        """
+        Run the local search algorithm to attempt fixing infeasibility.
+
+        The algorithm starts from the current state (based on the initial selection of triplets) and explores
+        new states by adding or removing triplets. It uses a priority queue to explore the most promising
+        states first (based on infeasibility and how many groups are overused).
+
+        Args:
+            max_infeas_count (int): Maximum allowed number of groups being overused simultaneously.
+            max_steps (int): Maximum number of iterations (nodes expanded) before giving up.
+
+        Returns:
+            Tuple[bool, int]:
+                - success (bool): Whether a feasible solution was found (no group overuse).
+                - steps (int): Number of steps taken in the search process.
+
+        Note:
+            If a feasible solution is found (infeasibility count is 0 and at least one triplet was added or removed),
+            it is applied back to the main data structures, updating the triplet usages and group states.
+        """
         logger.debug(f"Starting local search with max_infeas_count={max_infeas_count}, max_steps={max_steps}")
         self.stats.passes += 1
 
@@ -222,16 +415,20 @@ class TripletLocalSearch:
         return False, max_steps
 
     def get_final_triplet_count(self) -> int:
+        """Return the total number of selected triplets."""
         return sum(t.used_count for t in self.triplets)
 
     def get_final_triplet_indices(self) -> List[int]:
+        """Return a list of selected triplet indices."""
         final_indices = []
         for t_index, t in enumerate(self.triplets):
             final_indices.extend([t_index] * t.used_count)
         return final_indices
 
     def get_final_triplets(self) -> List[Tuple[int, int, int]]:
+        """Return the list of selected triplets."""
         return [self.triplets[t_index].triplet for t_index in self.get_final_triplet_indices()]
 
     def get_stats(self) -> 'TripletLocalSearch.Stats':
+        """Return statistics from the last run of the local search."""
         return self.stats

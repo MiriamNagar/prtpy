@@ -6,7 +6,60 @@ logger = logging.getLogger(__name__)
 
 
 class MultiCombination:
+    """
+    Class for generating and indexing multi-combinations of items grouped by weight.
+
+    It allows:
+    - Counting how many unique combinations of size `k` exist.
+    - Fetching a specific combination by index.
+
+    Each item has a weight (group label), and items with the same weight are treated as indistinguishable.
+
+    The core of the implementation is the `ctr` table, which is a dynamic programming
+    table used to efficiently count and index combinations.
+
+    Explanation of `ctr` table:
+
+    - `ctr[k][b]` holds the number of ways to choose `k` items from the last `b` groups.
+
+    - Base cases:
+    - Choosing 0 items (k=0) always has 1 way regardless of groups.
+    - Choosing items with zero groups available results in 0 ways.
+
+    - For each number of items `k` and group count `b`,
+    the value is computed by summing over possible counts `c` of items chosen
+    from the current group (limited by group size and `k`),
+    combining with ways to choose the remaining `k-c` items from previous groups.
+
+    This dynamic programming table enables efficient querying and retrieval of
+    combination counts and specific combinations.
+
+    This approach efficiently counts all valid combinations without enumerating them explicitly.
+
+    Example:
+        >>> mc = MultiCombination()
+        >>> mc.init(indices=[1, 2, 3, 4], weights=[1, 1, 2, 3])
+        >>> mc.get_choice_count(2)
+        4
+        >>> mc.get_single_choice(2, 0)  # one valid combination of size 2
+        [4, 3]
+
+    """
+
     class Item:
+        """
+        Internal representation of an item group by weight.
+
+        Attributes:
+            weight (int): The weight/group ID of the items.
+            indices (List[int]): The actual item identifiers in this group.
+
+        Example:
+            >>> item = MultiCombination.Item(weight=3)
+            >>> item.indices = [10, 11]
+            >>> repr(item)
+            'Item(weight=3, indices=[10, 11])'
+        """
         def __init__(self, weight: int):
             self.weight = weight
             self.indices: List[int] = []
@@ -15,6 +68,25 @@ class MultiCombination:
             return f"Item(weight={self.weight}, indices={self.indices})"
 
     def __init__(self, indices: List[int] = [], weights: List[int] = []):
+        """
+        Initializes the MultiCombination with given item indices and weights.
+
+        Args:
+            indices (List[int]): List of item identifiers.
+            weights (List[int]): Corresponding weights for each item (same length as indices).
+
+        Raises:
+            ValueError: If lengths of indices and weights differ.
+
+        The method groups items by their weights (descending),
+        and constructs the `ctr` table used for counting and indexing combinations.
+
+        Example:
+        >>> mc = MultiCombination()
+        >>> mc.init([10, 11, 12], [1, 2, 1])
+        >>> mc.get_choice_count(2)
+        2
+        """
         logger.debug("MultiCombination.__init__ called")
         self.items: List[MultiCombination.Item] = []
         self.total_count = 0
@@ -27,6 +99,26 @@ class MultiCombination:
             logger.debug("No indices or weights provided at init")
 
     def init(self, indices: List[int], weights: List[int]):
+        """
+        Initializes the MultiCombination object with given indices and their weights (group labels).
+
+        Args:
+            indices (List[int]): List of item identifiers.
+            weights (List[int]): List of weights (group IDs), must be same length as `indices`.
+
+        Raises:
+            ValueError: If indices and weights are not the same length.
+
+        Example:
+            >>> mc = MultiCombination()
+            >>> mc.init(indices=[10, 11, 12], weights=[1, 2, 1])
+            >>> len(mc.items)
+            2
+            >>> mc.items[0].weight  # highest weight first
+            2
+            >>> mc.items[1].weight
+            1
+        """
         logger.info("Initializing MultiCombination with given indices and weights")
         if len(indices) != len(weights):
             logger.error("Indices and weights length mismatch")
@@ -71,6 +163,25 @@ class MultiCombination:
         logger.debug(f"ctr table computed (partial): {self.ctr[:min(5, K+1)]}")
 
     def get_choice_count(self, k: int) -> int:
+        """
+        Return the number of ways to choose `k` elements from the items.
+
+        Args:
+            k (int): Number of items to choose.
+
+        Returns:
+            int: Number of valid combinations of size `k`.
+
+        Example:
+            >>> mc = MultiCombination()
+            >>> mc.init(indices=[1, 2, 3, 4], weights=[1, 1, 2, 3])
+            >>> mc.get_choice_count(2)
+            4
+            >>> mc.get_choice_count(0)
+            1
+            >>> mc.get_choice_count(5)
+            0
+        """
         logger.debug(f"get_choice_count called with k={k}")
         if k > self.total_count:
             logger.warning(f"Requested choice count for k={k} greater than total_count={self.total_count}")
@@ -80,6 +191,29 @@ class MultiCombination:
         return count
 
     def get_single_choice(self, k: int, case_index: int) -> List[int]:
+        """
+        Get the `case_index`-th combination of `k` items from the items.
+
+        Args:
+            k (int): Number of items to select.
+            case_index (int): Index of the desired combination (0-based).
+
+        Returns:
+            List[int]: List of selected indices.
+
+        Raises:
+            ValueError: If `case_index` is out of bounds.
+
+        Example:
+            >>> mc = MultiCombination()
+            >>> mc.init(indices=[10, 11, 12], weights=[1, 2, 1])
+            >>> mc.get_choice_count(2)
+            2
+            >>> mc.get_single_choice(2, 0)
+            [11, 10]
+            >>> mc.get_single_choice(2, 1)
+            [10, 12]
+        """
         logger.debug(f"get_single_choice called with k={k}, case_index={case_index}")
 
         max_index = self.ctr[k][len(self.items)]
