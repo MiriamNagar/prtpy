@@ -1,3 +1,13 @@
+"""
+An implementation of the algorithms in:
+    "Solution of Bin Packing Instances in Falkenauer T Class: Not So Hard",
+    by György Dósa, András Éles, Angshuman Robin Goswami, István Szalkai, Zsolt Tuza (2025),
+    https://www.mdpi.com/1999-4893/18/2/115#
+
+Programmer: Miriam Nagar.
+Date: 2025-04.
+"""
+
 from typing import List, Tuple
 import random
 from prtpy.binners import BinnerKeepingContents, printbins
