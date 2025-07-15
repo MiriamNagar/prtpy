@@ -63,13 +63,13 @@ class SolutionChecker:
             >>> # Add correct triplets to solution here
             >>> SolutionChecker.check(problem, solution)  # Should not raise if valid
         """
-        logger.debug("Starting solution check.")
+        logger.info("Starting solution check.")
 
         triplets = solution.get_triplets()
         expected_n = problem.get_n()
         actual_n = len(triplets)
 
-        logger.debug(f"Expected triplet count: {expected_n}, Actual triplet count: {actual_n}")
+        logger.info(f"Expected triplet count: {expected_n}, Actual triplet count: {actual_n}")
 
         if expected_n != actual_n:
             error_msg = f"Triplet count mismatch: expected {expected_n}, got {actual_n}."

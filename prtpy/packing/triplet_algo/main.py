@@ -12,7 +12,6 @@ if __name__ == "__main__":
     Measures and logs the total elapsed time for benchmark execution,
     and handles any exceptions by logging error details.
     """
-    logger.info("main() start")
     main_start_t = Clock.elapsed()
 
     try:
@@ -24,5 +23,4 @@ if __name__ == "__main__":
     finally:
         main_end_t = Clock.elapsed()
         main_elapsed = main_end_t - main_start_t
-        logger.info("main() end")
         logger.info(f"Total time elapsed: {main_elapsed} seconds")

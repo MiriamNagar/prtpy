@@ -30,7 +30,7 @@ class TripletBacktracker:
         self.tsc = tsc
         self.a_index_set = a_index_set
         self.stats = Stats(SolverData.MAX_LOOPS - self.tsc.total_loops, self.tsc.t_solver_start)
-        logger.debug(f"Initializing TripletBacktracker with {len(a_index_set)} a_indices")
+        logger.info(f"Initializing TripletBacktracker with {len(a_index_set)} a_indices")
         self.triplets: list[TripletInfo] = []
         self.triplet_states: List[Dict[str, int]] = []
         self.chosen_triplet_indices: List[int] = []
@@ -147,7 +147,7 @@ class TripletBacktracker:
         Returns:
             List[int]: Indices of selected triplets.
         """
-        logger.debug(f"Getting chosen triplet indices: {self.chosen_triplet_indices}")
+        logger.info(f"Getting chosen triplet indices: {self.chosen_triplet_indices}")
         return self.chosen_triplet_indices
 
     def execute_backtrack(self, backtrack_policy: int = 0) -> bool:
@@ -187,7 +187,6 @@ class TripletBacktracker:
             set_next_event()
 
         while True:
-            logger.debug(f"Current chosen triplets: {self.chosen_triplet_indices}")
             if self.is_solution():
                 logger.info("### SOLUTION FOUND IN BACKTRACKING PHASE! ###")
                 self.analyze_solution()
@@ -206,7 +205,7 @@ class TripletBacktracker:
                     logger.warning("No changes added to stack in branching loop.")
                     raise SolverData.NoSolution("No changes added to stack in branching loop.")
             except BranchImpossible:
-                logger.warning("BranchImpossible exception caught during backtracking")
+                logger.debug("BranchImpossible exception caught during backtracking")
                 if backtrack_policy == 0:
                     logger.debug("BACKTRACKING_POLICY=0: undoing until next branch")
                     if not self.undo_until_next_branch():
@@ -237,15 +236,10 @@ class TripletBacktracker:
             triplet_index (int): Index of the triplet to use.
         """
         a, b, c = self.triplets[triplet_index].triplet
-        logger.debug(f"Adding used triplet {triplet_index}: ({a}, {b}, {c})")
         self.triplets[triplet_index].used_count += 1
         self.groups[a].left_a -= 1
         self.groups[b].left_bc -= 1
         self.groups[c].left_bc -= 1
-        logger.debug(
-            f"Updated groups after add: group {a} left_a={self.groups[a].left_a}, "
-            f"group {b} left_bc={self.groups[b].left_bc}, group {c} left_bc={self.groups[c].left_bc}"
-        )
 
     def remove_used_triplet(self, triplet_index: int) -> None:
         """
@@ -258,15 +252,10 @@ class TripletBacktracker:
             triplet_index (int): Index of the triplet to remove usage of.
         """
         a, b, c = self.triplets[triplet_index].triplet
-        logger.debug(f"Removing used triplet {triplet_index}: ({a}, {b}, {c})")
         self.triplets[triplet_index].used_count -= 1
         self.groups[a].left_a += 1
         self.groups[b].left_bc += 1
         self.groups[c].left_bc += 1
-        logger.debug(
-            f"Updated groups after remove: group {a} left_a={self.groups[a].left_a}, "
-            f"group {b} left_bc={self.groups[b].left_bc}, group {c} left_bc={self.groups[c].left_bc}"
-        )
 
     def set_triplet_disabled(self, triplet_index: int):
         """
@@ -280,7 +269,6 @@ class TripletBacktracker:
         Raises:
             SolverData.NoSolution: If the triplet is already disabled.
         """
-        logger.debug(f"Disabling triplet {triplet_index}")
         t_info = self.triplets[triplet_index]
 
         if not t_info.is_available:
@@ -331,7 +319,6 @@ class TripletBacktracker:
         Raises:
             SolverData.NoSolution: If the triplet is already enabled.
         """
-        logger.debug(f"Enabling triplet {triplet_index}")
         t_info = self.triplets[triplet_index]
 
         if t_info.is_available:
@@ -342,13 +329,11 @@ class TripletBacktracker:
 
         if t_info.index_of_available == len(self.available_triplet_indices):
             self.available_triplet_indices.append(triplet_index)
-            logger.debug(f"Appended triplet {triplet_index} to available_triplet_indices")
         else:
             other = self.available_triplet_indices[t_info.index_of_available]
             self.available_triplet_indices[t_info.index_of_available] = triplet_index
             self.triplets[other].index_of_available = len(self.available_triplet_indices)
             self.available_triplet_indices.append(other)
-            logger.debug(f"Swapped triplet {triplet_index} with {other} in available_triplet_indices")
 
         a, b, c = t_info.triplet
 
@@ -356,7 +341,6 @@ class TripletBacktracker:
         if not t_info.equal_bc:
             if t_info.index_of_available_c == len(self.groups[c].available_triplet_indices_bc):
                 self.groups[c].available_triplet_indices_bc.append(triplet_index)
-                logger.debug(f"Appended triplet {triplet_index} to group {c}'s available_triplet_indices_bc")
             else:
                 other = self.groups[c].available_triplet_indices_bc[t_info.index_of_available_c]
                 self.groups[c].available_triplet_indices_bc[t_info.index_of_available_c] = triplet_index
@@ -365,14 +349,10 @@ class TripletBacktracker:
                 else:
                     self.triplets[other].index_of_available_c = len(self.groups[c].available_triplet_indices_bc)
                 self.groups[c].available_triplet_indices_bc.append(other)
-                logger.debug(
-                    f"Swapped triplet {triplet_index} with {other} in group {c}'s available_triplet_indices_bc"
-                )
 
         # Handle group b
         if t_info.index_of_available_b == len(self.groups[b].available_triplet_indices_bc):
             self.groups[b].available_triplet_indices_bc.append(triplet_index)
-            logger.debug(f"Appended triplet {triplet_index} to group {b}'s available_triplet_indices_bc")
         else:
             other = self.groups[b].available_triplet_indices_bc[t_info.index_of_available_b]
             self.groups[b].available_triplet_indices_bc[t_info.index_of_available_b] = triplet_index
@@ -381,18 +361,15 @@ class TripletBacktracker:
             else:
                 self.triplets[other].index_of_available_c = len(self.groups[b].available_triplet_indices_bc)
             self.groups[b].available_triplet_indices_bc.append(other)
-            logger.debug(f"Swapped triplet {triplet_index} with {other} in group {b}'s available_triplet_indices_bc")
 
         # Handle group a
         if t_info.index_of_available_a == len(self.groups[a].available_triplet_indices_a):
             self.groups[a].available_triplet_indices_a.append(triplet_index)
-            logger.debug(f"Appended triplet {triplet_index} to group {a}'s available_triplet_indices_a")
         else:
             other = self.groups[a].available_triplet_indices_a[t_info.index_of_available_a]
             self.groups[a].available_triplet_indices_a[t_info.index_of_available_a] = triplet_index
             self.triplets[other].index_of_available_a = len(self.groups[a].available_triplet_indices_a)
             self.groups[a].available_triplet_indices_a.append(other)
-            logger.debug(f"Swapped triplet {triplet_index} with {other} in group {a}'s available_triplet_indices_a")
 
     def get_max_uses_for_triplet_index(self, triplet_index: int) -> int:
         """
@@ -410,10 +387,6 @@ class TripletBacktracker:
         left_a = self.groups[a].left_a
         left_bc = self.groups[b].left_bc // 2 if info.equal_bc else min(self.groups[b].left_bc, self.groups[c].left_bc)
         max_uses = min(left_a, left_bc)
-        logger.debug(
-            f"Max uses for triplet {triplet_index} ({a},{b},{c}): "
-            f"left_a={left_a}, left_bc={left_bc}, max_uses={max_uses}"
-        )
         return max_uses
 
     def add_step(self, new_step: Step) -> None:
@@ -430,13 +403,8 @@ class TripletBacktracker:
         """
         self.stats.current_step_count += 1
         new_step.triplet_backtracker = self
-        logger.debug(
-            f"Adding step: {new_step.__class__.__name__} for triplet index "
-            f"{getattr(new_step, 'triplet_index', 'N/A')}"
-        )
         new_step.perform()
         self.stack.append(new_step)
-        logger.debug(f"Step added. Current stack size: {len(self.stack)}")
 
     def add_branching(self, options: list[Step]) -> None:
         """
@@ -456,10 +424,8 @@ class TripletBacktracker:
             step.triplet_backtracker = self
         branching_step = BranchingStep(deque(options), self)
         branching_step.step_count_start = self.stats.current_step_count
-        logger.debug(f"Adding branching step with {len(options)} options")
         branching_step.perform()
         self.stack.append(branching_step)
-        logger.debug(f"Branching step added. Current stack size: {len(self.stack)}")
 
     def main_branching_loop(self):
         """
@@ -475,14 +441,12 @@ class TripletBacktracker:
             triplet_retire: List[Step] = []
             self.take_options_a = [0] * G
             self.take_options_bc = [0] * G
-            logger.debug(f"Available triplet indices before loop: {self.available_triplet_indices}")
 
             for triplet_index in list(self.available_triplet_indices):
                 max_uses = self.get_max_uses_for_triplet_index(triplet_index)
                 if max_uses == 0:
                     step = ExcludeTriplet(triplet_index, self)
                     triplet_retire.append(step)
-                    logger.debug(f"Triplet {triplet_index} max_uses=0, scheduling exclude step")
                 else:
                     a, b, c = self.triplets[triplet_index].triplet
                     self.take_options_a[a] += max_uses
@@ -497,11 +461,9 @@ class TripletBacktracker:
             def is_critical() -> bool:
                 for a in range(G):
                     if self.groups[a].left_a and self.take_options_a[a] == self.groups[a].left_a:
-                        logger.debug(f"Group {a} is critical by left_a")
                         return True
                 for bc in range(G):
                     if self.groups[bc].left_bc and self.take_options_bc[bc] == self.groups[bc].left_bc:
-                        logger.debug(f"Group {bc} is critical by left_bc")
                         return True
                 return False
 
@@ -541,7 +503,6 @@ class TripletBacktracker:
             ):
                 best_group_which, best_group_index = 1, a
                 best_ratio = (self.groups[a].left_a, self.take_options_a[a])
-                logger.debug(f"Best group updated to A-index {a} with ratio {best_ratio}")
 
         for bc in range(G):
             if not self.groups[bc].left_bc:
@@ -551,10 +512,8 @@ class TripletBacktracker:
             ):
                 best_group_which, best_group_index = 2, bc
                 best_ratio = (self.groups[bc].left_bc, self.take_options_bc[bc])
-                logger.debug(f"Best group updated to BC-index {bc} with ratio {best_ratio}")
 
         if best_group_which == 0:
-            logger.debug("No best group found, returning from main_branching_loop")
             return
 
         triplet_candidate_indices = (
@@ -585,7 +544,6 @@ class TripletBacktracker:
         self.stats.winning_branches.append(
             SolverData.BranchingChoiceStats(True, best_group_which == 1, best_ratio[0], best_ratio[1], best_mu)
         )
-        logger.debug(f"Adding branching steps for triplet {best_ti} with max_uses {best_mu}")
         self.add_branching(steps)
 
     def undo_until_next_branch(self) -> bool:
@@ -639,5 +597,5 @@ class TripletBacktracker:
 
         """
         triplets = [self.triplets[i].triplet for i in self.chosen_triplet_indices]
-        logger.debug(f"Chosen triplets: {triplets}")
+        logger.info(f"Chosen triplets: {triplets}")
         return triplets

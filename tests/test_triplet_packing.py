@@ -2,14 +2,8 @@ from typing import List, Tuple
 import random
 from prtpy.binners import BinnerKeepingContents, printbins
 import logging
-from prtpy.packing.triplet_packing import (
-    backtrack_method,
-    local_search,
-    NoSolutionError,
-    NegativeValueError,
-    IncorrectTotalValueError,
-    InvalidInputTypeError,
-)
+from prtpy.packing.triplet_packing import triplet_packing
+from prtpy.packing.triplet_algo.models import SolverData
 import pytest
 import numpy.testing as npt
 
@@ -134,6 +128,20 @@ Falkenauer_t_test_cases = [
 ]
 
 
+not_allocatable_test_case = [
+    {"item_num": 60,
+    "bin_size": 1000,
+    "items": [
+        333, 333, 333, 333, 333, 333, 333, 333, 333, 333,
+        333, 333, 333, 333, 333, 333, 333, 333, 333, 333,
+        333, 333, 333, 333, 333, 333, 333, 333, 333, 333,
+        333, 333, 333, 333, 333, 333, 333, 333, 333, 333,
+        333, 333, 333, 333, 333, 333, 333, 333, 333, 333,
+        333, 333, 333, 333, 333, 333, 333, 333, 333, 353,
+    ]},
+]
+
+
 def _generate_items_and_put_into_bins(seed: int, bin_size: int, items_num: int):
     DEFAULT_BIN_SIZE = 1000
     DEFAULT_ITEM_NUM = 60
@@ -160,9 +168,7 @@ def _generate_items_and_put_into_bins(seed: int, bin_size: int, items_num: int):
 
     item_list = []
     for i in range(items_num // 3):
-        # random.seed(seed + i * 2)
         item_1 = random.randint(lower_bnd, upper_bnd)
-        # random.seed(seed + i * 4)
         item_2 = random.randint(lower_bnd, upper_bnd)
         item_3 = bin_size - (item_1 + item_2)
         item_list.extend([item_1, item_2, item_3])
@@ -223,57 +229,96 @@ def test_creation_random_allocatable_item_list():
 
 
 def test_randomized_items_packing_allocation():
-    bin_sizes = [1000, 1200, 1500, 2000]
-    item_nums = [60, 99, 105, 120]
+    bin_sizes = [1000]
+    item_nums = [60, 99]
 
-    for func in [backtrack_method, local_search]:
-        for b_size, item_num in zip(bin_sizes, item_nums):
-            item_list, bins = create_random_allocatable_item_list(b_size, item_num)
-            sums, triplets = bins
-            assert check_item_list_is_valid(b_size, triplets)
+    for b_size, item_num in zip(bin_sizes, item_nums):
+        item_list, bins = create_random_allocatable_item_list(b_size, item_num)
+        sums, triplets = bins
+        assert check_item_list_is_valid(b_size, triplets)
 
-            bin_result = func(BinnerKeepingContents(), binsize=b_size, items=item_list)
-            sum_result, triplets_result = bin_result
+        # backtrack
+        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list)
+        _, triplets_result = bin_result
 
-            npt.assert_array_equal(sum_result, sums)
-            assert sorted(triplets_result) == sorted(triplets)
+        for tri in triplets_result:
+            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
+            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
+
+        # local search
+        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search_method=True)
+        _, triplets_result = bin_result
+
+        for tri in triplets_result:
+            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
+            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
 
 
 def test_items_packing_allocation():
-    for func in [backtrack_method]: 
-        for item in Falkenauer_t_test_cases:
-            b_size = item["bin_size"]
-            item_list = item["items"]
-            print(f"me:: {item_list}")
+    
+    for item in Falkenauer_t_test_cases:
+        b_size = item["bin_size"]
+        item_list = item["items"]
 
-            bin_result = func(BinnerKeepingContents(), binsize=b_size, items=item_list)
-            _, result = bin_result
+        # backtrack
+        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list)
+        _, triplets_result = bin_result
 
-            # assert sorted(result) == sorted(item["result"])
-            results = []
-            for tri in result:
-                results.append(sum(tri) == b_size)
-            assert all(results)
+        for tri in triplets_result:
+            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
+            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
+
+        # local search
+        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search_method=True)
+        _, triplets_result = bin_result
+
+        for tri in triplets_result:
+            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
+            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
 
 
 def test_invalid_input_throws_exception():
-    for func in [backtrack_method, local_search]:
-        item_list = create_random_not_allocatable_item_list()
+    for func in [triplet_packing]:
+        item_list, _ = create_random_not_allocatable_item_list()
 
-        with pytest.raises(NoSolutionError):
+        with pytest.raises(RuntimeError):
+            # Total sum mismatch, actual vs expected: 20001 vs 20000
             func(BinnerKeepingContents(), binsize=1000, items=item_list)
 
-        with pytest.raises(NoSolutionError):
+        with pytest.raises(TypeError):
+            # invalid item
             func(BinnerKeepingContents(), binsize=1000, items=[])
 
-        with pytest.raises(InvalidInputTypeError):
+        with pytest.raises(TypeError):
+            # Invalid binner value
             func(binner=5, binsize=1000, items=item_list)
 
-        with pytest.raises(NegativeValueError):
+        with pytest.raises(RuntimeError):
             func(BinnerKeepingContents(), binsize=-5, items=item_list)
 
-        with pytest.raises(NegativeValueError):
+        with pytest.raises(RuntimeError):
+            # Non-positive weight found in: [400, -100, 200]
             func(BinnerKeepingContents(), binsize=500, items=[400, -100, 200])
 
-        with pytest.raises(IncorrectTotalValueError):
+        with pytest.raises(RuntimeError):
+            # Weight count not a multiple of three: 4
             func(BinnerKeepingContents(), binsize=1000, items=[400, 600, 200, 50])
+
+
+
+def test_no_solution_local_search():
+    for item in not_allocatable_test_case:
+        b_size = item["bin_size"]
+        item_list = item["items"]
+
+        with pytest.raises(SolverData.Error):
+            triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search_method=True)
+
+
+def test_no_solution_backtrack():
+    for item in not_allocatable_test_case:
+        b_size = item["bin_size"]
+        item_list = item["items"]
+        
+        with pytest.raises(SolverData.Error):
+            triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list)

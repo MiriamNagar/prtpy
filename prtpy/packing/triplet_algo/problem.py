@@ -99,8 +99,8 @@ class Problem:
         logger.info("Initializing Problem with weights and binsize")
         self.weights = weights
         self.binsize = binsize
-        logger.debug("Weights: %s", weights)
-        logger.debug("Binsize: %d", binsize)
+        logger.info("Weights: %s", weights)
+        logger.info("Binsize: %d", binsize)
         self.check()
         self.check_triplet_sum(self.binsize)
 

@@ -29,21 +29,22 @@ class Solver:
             Solver.Answer: An object containing the solution, statistics,
                 and status of the solving process.
         """
-        logger.debug("Solver.solve called with problem: %s", problem)
+        logger.info("Solver.solve called with problem: %s", problem)
 
         # Initialize the TripletPlanner with the given problem
         level_state = TripletPlanner(problem)
         logger.info("Initialized TripletPlanner")
 
         try:
-            logger.debug("Starting algorithm execution")
+            logger.info("Starting algorithm execution")
             # Run the core solving algorithm with or without local search
             level_state.execute_algorithm(use_local_search)
             logger.info("Algorithm executed successfully")
         except SolverData.Error as e:
             # If a solver-related error occurs, record its message in TripletPlanner
-            level_state.set_message(str(e))
-            logger.error("SolverData.Error encountered: %s", str(e))
+            # level_state.set_message(str(e))
+            # logger.error("SolverData.Error encountered: %s", str(e))
+            raise SolverData.Error
 
         # Retrieve and return the answer object with solution details and stats
         answer = level_state.get_answer()

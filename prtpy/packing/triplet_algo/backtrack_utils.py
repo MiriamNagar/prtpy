@@ -45,7 +45,7 @@ class Stats:
         self.current_loops = 0
         self.max_loops = max_loops
         self.t_solver_start = t_solver_start
-        logger.debug("Stats initialized with max_loops=%d", max_loops)
+        logger.info("Stats initialized with max_loops=%d", max_loops)
 
 
 class Step:
@@ -98,7 +98,6 @@ class ApplyTriplet(TripletBaseStep):
         """
         Mark the triplet as used and add it to chosen triplets.
         """
-        logger.debug("ApplyTriplet.perform: triplet_index=%d", self.triplet_index)
         self.triplet_backtracker.add_used_triplet(self.triplet_index)
         self.triplet_backtracker.chosen_triplet_indices.append(self.triplet_index)
 
@@ -106,7 +105,6 @@ class ApplyTriplet(TripletBaseStep):
         """
         Remove the triplet from the used set and chosen list.
         """
-        logger.debug("ApplyTriplet.undo: triplet_index=%d", self.triplet_index)
         self.triplet_backtracker.remove_used_triplet(self.triplet_index)
         self.triplet_backtracker.chosen_triplet_indices.pop()
 
@@ -120,14 +118,12 @@ class ExcludeTriplet(TripletBaseStep):
         """
         Disable the triplet to exclude it from future consideration.
         """
-        logger.debug("ExcludeTriplet.perform: triplet_index=%d", self.triplet_index)
         self.triplet_backtracker.set_triplet_disabled(self.triplet_index)
 
     def undo(self) -> None:
         """
         Re-enable the previously disabled triplet.
         """
-        logger.debug("ExcludeTriplet.undo: triplet_index=%d", self.triplet_index)
         self.triplet_backtracker.set_triplet_enabled(self.triplet_index)
 
 
@@ -151,8 +147,6 @@ class BranchingStep(Step):
         self.step_count_backtrack = 0
         self.backtrack_happened = False
 
-        logger.debug("BranchingStep created with %d options", len(options))
-
     def perform(self) -> None:
         """
         Perform the first option in the queue.
@@ -164,7 +158,6 @@ class BranchingStep(Step):
         Undo the last performed option and remove it from options queue.
         Mark that backtracking happened and record step count.
         """
-        logger.debug("BranchingStep.undo: undoing current option, remaining options=%d", len(self.options))
         self.options[0].undo()
         self.options.popleft()
 

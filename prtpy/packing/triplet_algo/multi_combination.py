@@ -94,7 +94,7 @@ class MultiCombination:
         self.ctr: List[List[int]] = []
 
         if indices and weights:
-            logger.debug(f"Initializing with indices={indices}, weights={weights}")
+            logger.info(f"Initializing with indices={indices}, weights={weights}")
             self.init(indices, weights)
         else:
             logger.debug("No indices or weights provided at init")
@@ -126,7 +126,6 @@ class MultiCombination:
             raise ValueError("Indices and weights must have the same size!")
 
         self.total_count = len(indices)
-        logger.debug(f"Total count: {self.total_count}")
 
         weight_groups = defaultdict(list)
         for i, w in zip(indices, weights):
@@ -140,7 +139,7 @@ class MultiCombination:
             item.indices = weight_groups[weight]
             self.items.append(item)
 
-        logger.debug(f"Items after grouping and sorting: {self.items}")
+        logger.info(f"Items after grouping and sorting: {self.items}")
 
         K = self.total_count
         B = len(self.items)
@@ -161,7 +160,7 @@ class MultiCombination:
                     sum_val += self.ctr[k - c][b - 1]
                 self.ctr[k][b] = sum_val
 
-        logger.debug(f"ctr table computed (partial): {self.ctr[:min(5, K+1)]}")
+        logger.info(f"ctr table computed (partial): {self.ctr[:min(5, K+1)]}")
 
     def get_choice_count(self, k: int) -> int:
         """
@@ -188,7 +187,7 @@ class MultiCombination:
             logger.warning(f"Requested choice count for k={k} greater than total_count={self.total_count}")
             return 0
         count = self.ctr[k][len(self.items)]
-        logger.debug(f"Choice count for k={k}: {count}")
+        logger.info(f"Choice count for k={k}: {count}")
         return count
 
     def get_single_choice(self, k: int, case_index: int) -> List[int]:
@@ -240,5 +239,5 @@ class MultiCombination:
                     break
                 sum_val = next_sum
 
-        logger.debug(f"get_single_choice result: {result}")
+        logger.info(f"get_single_choice result: {result}")
         return result

@@ -297,7 +297,6 @@ class TripletLocalSearch:
             while node.prev is not None:
                 nodes.append(node)
                 node = node.prev
-            logger.debug(f"Applying solution of length {len(nodes)}")
             for node in reversed(nodes):
                 a, b, c = node.parent.triplets[node.triplet_index].triplet
                 if node.is_add:
@@ -305,13 +304,11 @@ class TripletLocalSearch:
                     node.parent.groups[a].left -= 1
                     node.parent.groups[b].left -= 1
                     node.parent.groups[c].left -= 1
-                    logger.debug(f"Added triplet {node.triplet_index}: ({a},{b},{c})")
                 else:
                     node.parent.triplets[node.triplet_index].used_count -= 1
                     node.parent.groups[a].left += 1
                     node.parent.groups[b].left += 1
                     node.parent.groups[c].left += 1
-                    logger.debug(f"Removed triplet {node.triplet_index}: ({a},{b},{c})")
             self.parent.stats.distance += len(nodes)
 
     def __init__(
