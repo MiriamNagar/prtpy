@@ -256,7 +256,7 @@ def test_randomized_items_packing_allocation():
             assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
 
         # local search
-        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search_method=True)
+        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search=True)
         _, triplets_result = bin_result
 
         for tri in triplets_result:
@@ -279,7 +279,7 @@ def test_items_packing_allocation():
             assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
 
         # local search
-        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search_method=True)
+        bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search=True)
         _, triplets_result = bin_result
 
         for tri in triplets_result:
@@ -322,7 +322,7 @@ def test_no_solution_local_search():
         item_list = item["items"]
 
         with pytest.raises(SolverData.Error):
-            triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search_method=True)
+            triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search=True)
 
 
 def test_no_solution_backtrack():

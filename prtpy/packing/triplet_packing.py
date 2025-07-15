@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_search_method: bool = False) -> BinsArray:
+def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_search: bool = False) -> BinsArray:
     """
     Allocates items into bins as triplets such that the sum of each triplet equals the given bin size.
 
@@ -103,7 +103,7 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
     problem.init(items, binsize)
 
     logger.info("Problem initialized. Solving with backtracking...")
-    result = Solver.solve(problem, use_local_search_method)
+    result = Solver.solve(problem, use_local_search)
     if not result.success:
         logging.error(result.error_message)
         raise 
