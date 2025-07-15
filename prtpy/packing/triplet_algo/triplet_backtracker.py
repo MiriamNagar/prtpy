@@ -1,6 +1,5 @@
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict, deque
-from .base import TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER
 import logging
 from .models import SolverData, TripletInfo, GroupInfo, TripletSearchContext
 from .backtrack_utils import BranchImpossible, Stats, Step, TripletBaseStep, ApplyTriplet, ExcludeTriplet, BranchingStep
@@ -8,6 +7,7 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
+TRIPLET_BACKTRACKER_BRANCHING_TIE_ORDER = 0
 
 class TripletBacktracker:
     """
