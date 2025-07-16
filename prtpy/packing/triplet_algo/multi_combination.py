@@ -239,5 +239,5 @@ class MultiCombination:
                     break
                 sum_val = next_sum
 
-        logger.info(f"get_single_choice result: {result}")
+        logger.debug(f"get_single_choice result: {result}")
         return result

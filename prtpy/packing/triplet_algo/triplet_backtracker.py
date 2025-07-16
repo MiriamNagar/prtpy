@@ -203,10 +203,9 @@ class TripletBacktracker:
                 if backtrack_policy == 0:
                     logger.debug("BACKTRACKING_POLICY=0: undoing until next branch")
                     if not self.undo_until_next_branch():
-                        logger.info("No more branches to undo; returning False")
+                        logger.debug("No more branches to undo; returning False")
                         return False
                 elif backtrack_policy == 1:
-                    logger.info("BACKTRACKING_POLICY=1: returning False on branch impossible")
                     return False
                 else:
                     logger.error("Invalid BACKTRACKING_POLICY encountered")

@@ -45,7 +45,7 @@ class Stats:
         self.current_loops = 0
         self.max_loops = max_loops
         self.t_solver_start = t_solver_start
-        logger.info("Stats initialized with max_loops=%d", max_loops)
+        logger.debug("Stats initialized with max_loops=%d", max_loops)
 
 
 class Step:
