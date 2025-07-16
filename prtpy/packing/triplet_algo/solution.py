@@ -43,7 +43,6 @@ class Solution:
         [(1, 2, 3)]
         """
         self.triplets.append(t)
-        logger.debug("Added triplet: %s", t)
 
     def get_triplets(self) -> List[Triplet]:
         """

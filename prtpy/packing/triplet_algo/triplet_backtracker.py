@@ -96,12 +96,6 @@ class TripletBacktracker:
             self.triplets[t].index_of_available_c = len(self.groups[c].available_triplet_indices_bc)
             self.groups[c].available_triplet_indices_bc.append(t)
 
-        logger.debug(f"Available triplet indices prepared: {self.available_triplet_indices}")
-        for idx, group in enumerate(self.groups):
-            logger.debug(
-                f"Group {idx}: available_triplet_indices_a={group.available_triplet_indices_a}, available_triplet_indices_bc={group.available_triplet_indices_bc}"
-            )
-
     def is_solution(self) -> bool:
         """
         Returns whether a complete solution has been found.
@@ -479,7 +473,6 @@ class TripletBacktracker:
                     or self.take_options_bc[c] == self.groups[c].left_bc
                 ):
                     max_uses = self.get_max_uses_for_triplet_index(triplet_index)
-                    logger.debug(f"Triplet {triplet_index} is critical, max_uses={max_uses}, applying {max_uses} times")
                     for _ in range(max_uses):
                         self.add_step(ApplyTriplet(triplet_index, self))
                     triplet_retire.append(ExcludeTriplet(triplet_index, self))
@@ -559,7 +552,6 @@ class TripletBacktracker:
 
         while self.stack:
             last_step = self.stack[-1]
-            logger.debug(f"Undoing step: {last_step.__class__.__name__}")
             last_step.undo()
 
             if isinstance(last_step, BranchingStep):
@@ -573,7 +565,6 @@ class TripletBacktracker:
                 logger.debug("No options left in branching step, popped winning branch")
 
             self.stack.pop()
-            logger.debug(f"Stack size after pop: {len(self.stack)}")
 
         logger.debug("No more steps to undo, returning False")
         return False
