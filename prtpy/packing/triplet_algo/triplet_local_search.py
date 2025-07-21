@@ -263,7 +263,6 @@ class TripletLocalSearch:
                 self.infeas_count == other.infeas_count
                 and self.extra_items == other.extra_items
                 and self.group_left == other.group_left
-                and self.triplet_used_count == other.triplet_used_count
             )
 
         def __hash__(self):
@@ -276,14 +275,11 @@ class TripletLocalSearch:
             Returns:
                 int: Hash value.
             """
-            return hash(
-                (
-                    self.infeas_count,
-                    self.extra_items,
-                    frozenset(self.group_left.items()),
-                    frozenset(self.triplet_used_count.items()),
-                )
-            )
+            return hash((
+                self.infeas_count,
+                self.extra_items,
+                frozenset(self.group_left.items()),
+            ))
 
         def apply_solution_on_parent(self):
             """
