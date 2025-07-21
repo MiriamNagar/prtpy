@@ -76,7 +76,7 @@ def main():
 
     experiments_csv.multi_multi_plot_results(
         "simulations/results/comparison_triplet_vs_local.csv",
-        save_to_file_template="results/triplet_local_vs_backtrack_runtime_comparison.png",
+        save_to_file_template="simulations/results/triplet_local_vs_backtrack_runtime_comparison.png",
         x_field="items_number",               # X-axis: problem size
         y_fields=["runtime"],                 # Only interested in runtime
         z_field="use_local_search",           # Compare local search vs regular
@@ -100,7 +100,7 @@ def main():
 
     experiments_csv.multi_multi_plot_results(
         "simulations/results/comparison_bin_completion_vs_triplet_packing.csv",
-        save_to_file_template="results/bin_completion_vs_backtrack_runtime_comparison.png",
+        save_to_file_template="simulations/results/bin_completion_vs_backtrack_runtime_comparison.png",
         x_field="items_number",               # X-axis: problem size
         y_fields=["runtime"],                 # Only interested in runtime
         z_field="algorithm",           # Compare local search vs regular
