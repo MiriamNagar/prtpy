@@ -23,13 +23,13 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
 
     This function implements two algorithms from the paper:
     - Complete backtracking search for fair item allocation (default method).
-    - Local search heuristic for fair item allocation (enabled if `use_local_search_method=True`).
+    - Local search heuristic for fair item allocation (enabled if `use_local_search=True`).
 
     Parameters:
         binner (Binner): An object responsible for managing bin creation and item assignment.
         binsize (float): The target sum for each triplet (i.e., bin size).
         items (List[Any]): A list of items to be grouped into triplets.
-        use_local_search_method (bool, optional): If True, uses a local search heuristic;
+        use_local_search (bool, optional): If True, uses a local search heuristic;
                                                   otherwise, uses the complete backtracking method.
                                                   Defaults to False.
 
@@ -53,7 +53,7 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
     >>> bins = triplet_packing(BinnerKeepingContents(), binsize=1000, items=[400, 350, 250])
     >>> check_triplet_bins(bins, 1000)
 
-    >>> bins = triplet_packing(BinnerKeepingContents(), binsize=1000, items=[400, 350, 250], use_local_search_method=True)
+    >>> bins = triplet_packing(BinnerKeepingContents(), binsize=1000, items=[400, 350, 250], use_local_search=True)
     >>> check_triplet_bins(bins, 1000)
 
     >>> printbins(triplet_packing(BinnerKeepingContents(), binsize=1000, items=[501, 400, 100, 490, 310, 200, 470, 330, 200]))
@@ -88,7 +88,7 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
     ...     468, 270, 262, 426, 314, 260, 411, 307, 282, 382,
     ...     361, 257, 396, 340, 264, 396, 304, 300, 473, 267,
     ...     260, 475, 269, 256, 376, 366, 258, 423, 319, 258
-    ... ], use_local_search_method = True)
+    ... ], use_local_search = True)
     >>> check_triplet_bins(bins, 1000)
     """
     if not isinstance(binner, Binner):
@@ -106,7 +106,7 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
     result = Solver.solve(problem, use_local_search)
     if not result.success:
         logging.error(result.error_message)
-        raise 
+        raise RuntimeError(result.error_message)
 
     bins = binner.new_bins(len(items) // 3)
     logger.info("Creating bins and assigning triplets...")
