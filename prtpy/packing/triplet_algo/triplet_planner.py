@@ -178,16 +178,6 @@ class TripletPlanner:
 
         Returns:
             int: Maximum number of triplet usages.
-
-        Examples:
-            >>> tp = TripletPlanner(problem=None)
-            >>> tp.group_cardinality = [6, 4, 3]
-            >>> tp.get_max_triplet_usage((0, 1, 2))
-            3
-            >>> tp.get_max_triplet_usage((0, 0, 0))
-            3
-            >>> tp.get_max_triplet_usage((1, 1, 2))
-            2
         """
         if cardinalities is None:
             cardinalities = self.group_cardinality

@@ -56,17 +56,17 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
     >>> bins = triplet_packing(BinnerKeepingContents(), binsize=1000, items=[400, 350, 250], use_local_search=True)
     >>> check_triplet_bins(bins, 1000)
 
-    >>> printbins(triplet_packing(BinnerKeepingContents(), binsize=1000, items=[501, 400, 100, 490, 310, 200, 470, 330, 200]))
+    >>> bins = triplet_packing(BinnerKeepingContents(), binsize=1000, items=[501, 400, 100, 490, 310, 200, 470, 330, 200])
     Traceback (most recent call last):
     ...
     RuntimeError: Total sum mismatch, actual vs expected: 3001 vs 3000
 
-    >>> printbins(triplet_packing(BinnerKeepingContents(), binsize=1000, items=[500, 400, 100, 200, 300]))
+    >>> bins = triplet_packing(BinnerKeepingContents(), binsize=1000, items=[500, 400, 100, 200, 300])
     Traceback (most recent call last):
     ...
     RuntimeError: Weight count not a multiple of three: 5
 
-    >>> printbins(triplet_packing(BinnerKeepingContents(), binsize=1000, items=[500, 500, 500]))
+    >>> bins = triplet_packing(BinnerKeepingContents(), binsize=1000, items=[500, 500, 500])
     Traceback (most recent call last):
     ...
     RuntimeError: Total sum mismatch, actual vs expected: 1500 vs 1000
