@@ -53,15 +53,6 @@ class SolutionChecker:
 
         Raises:
             WrongSolution: If any validation fails.
-
-        Example:
-            >>> from yourmodule.problem import Problem
-            >>> from yourmodule.solution import Solution
-            >>> # Assume Problem and Triplet classes have suitable constructors
-            >>> problem = Problem(...)  # Initialize appropriately
-            >>> solution = Solution()
-            >>> # Add correct triplets to solution here
-            >>> SolutionChecker.check(problem, solution)  # Should not raise if valid
         """
         logger.info("Starting solution check.")
 
