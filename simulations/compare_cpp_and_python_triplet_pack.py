@@ -1,7 +1,7 @@
 import random
 import logging
 import time
-# from experiments_csv import multi_multi_plot
+
 import cppyy
 import experiments_csv
 import prtpy
@@ -18,32 +18,34 @@ cppyy.load_library("simulations/cpp_triplet_packing_files/libtriplet_solver_ls.s
 
 
 def read_benchmark_format(path: str):
-        """
-        Read weights from a benchmark format file.
+    """
+    Read weights from a benchmark format file.
 
-        The first line is the number of weights N.
-        The second line is the expected triplet sum.
-        The next N lines are the weights.
+    The first line is the number of weights N.
+    The second line is the expected triplet sum.
+    The next N lines are the weights.
 
-        Args:
-            path (str): Path to the benchmark file.
+    Args:
+        path (str): Path to the benchmark file.
 
-        Raises:
-            RuntimeError: If the file is invalid, not found, or the sum check fails.
-        """
-        try:
-            with open(path, "r") as file:
-                lines = [int(line.strip()) for line in file if line.strip()]
-        except FileNotFoundError:
-            raise RuntimeError(f"Problem input file not found: {path}")
+    Raises:
+        RuntimeError: If the file is invalid, not found, or the sum check fails.
+    """
+    try:
+        with open(path, "r") as file:
+            lines = [int(line.strip()) for line in file if line.strip()]
+    except FileNotFoundError:
+        raise RuntimeError(f"Problem input file not found: {path}")
 
-        if len(lines) < 2:
-            raise RuntimeError("Benchmark file must contain at least two lines for N and triplet sum.")
+    if len(lines) < 2:
+        raise RuntimeError(
+            "Benchmark file must contain at least two lines for N and triplet sum."
+        )
 
-        N = lines[0]
-        triplet_sum = lines[1]
-        weights = lines[2 : 2 + N]
-        return weights, triplet_sum
+    N = lines[0]
+    triplet_sum = lines[1]
+    weights = lines[2 : 2 + N]
+    return weights, triplet_sum
 
 
 def generate_triplet_input(bin_size: int, items_num: int):
@@ -58,7 +60,7 @@ def generate_triplet_input(bin_size: int, items_num: int):
             item_3 = bin_size - (item_1 + item_2)
             if item_3 > 0:
                 item_list.extend([item_1, item_2, item_3])
-                break  # break the while-loop if the triplet is valid
+                break
     return item_list
 
 
@@ -68,14 +70,16 @@ def to_cpp_vector(py_list):
         vec.push_back(item)
     return vec
 
+
 def solve_cpp_backtracking(weights, binsize):
-    cpp_weights = to_cpp_vector(weights) 
-    p = cppyy.gbl.solver_bt.Problem() 
+    cpp_weights = to_cpp_vector(weights)
+    p = cppyy.gbl.solver_bt.Problem()
     p.setWeights(cpp_weights)
     t0 = time.perf_counter()
     ans = cppyy.gbl.solver_bt.Solver.solve(p)
     elapsed = time.perf_counter() - t0
     return elapsed, ans.success
+
 
 def solve_cpp_localsearch(weights, binsize):
     cpp_weights = to_cpp_vector(weights)
@@ -86,6 +90,7 @@ def solve_cpp_localsearch(weights, binsize):
     elapsed = time.perf_counter() - t0
     return elapsed, ans.success
 
+
 def solve_py_backtracking(weights, binsize):
     t0 = time.perf_counter()
     result = prtpy.pack(
@@ -94,9 +99,10 @@ def solve_py_backtracking(weights, binsize):
         items=weights,
         outputtype=prtpy.out.PartitionAndSums,
     )
-    
+
     elapsed = time.perf_counter() - t0
     return elapsed, True
+
 
 def solve_py_localsearch(weights, binsize):
     t0 = time.perf_counter()
@@ -105,30 +111,33 @@ def solve_py_localsearch(weights, binsize):
         binsize=binsize,
         items=weights,
         outputtype=prtpy.out.PartitionAndSums,
-        use_local_search=True
+        use_local_search=True,
     )
-    
+
     elapsed = time.perf_counter() - t0
     return elapsed, True
 
-# def run_once(binsize: int, seed: int, method: callable, items_number: int, file_number: int):
+
 def run_once(method: callable, items_number: int, index: int):
-    # rnd= random.Random(seed)
-    # weights = generate_triplet_input(binsize, items_number)
-    weights, binsize = read_benchmark_format(f"prtpy/packing/triplet_algo/Falkenauer_T/Falkenauer_t{items_number}_{index:02d}.txt")
+    weights, binsize = read_benchmark_format(
+        f"prtpy/packing/triplet_algo/Falkenauer_T/Falkenauer_t{items_number}_{index:02d}.txt"
+    )
     elapsed, success = method(weights, binsize)
     return {
         "binsize": binsize,
-        # "seed": seed,
         "method": method.__name__,
         "time": elapsed,
-        "success": success
+        "success": success,
     }
 
 
 def main():
     experiments_csv.logger.setLevel(logging.INFO)
-    experiment = experiments_csv.Experiment("simulations/results/", "comparison_py_triplet_vs_cpp_triplet_algo.csv", backup_folder=None)
+    experiment = experiments_csv.Experiment(
+        "simulations/results/",
+        "comparison_py_triplet_vs_cpp_triplet_algo.csv",
+        backup_folder=None,
+    )
 
     input_ranges = {
         "method": [
@@ -174,7 +183,14 @@ def main():
     experiments_csv.single_plot_results(
         "simulations/results/comparison_py_triplet_vs_cpp_triplet_algo.csv",
         save_to_file="simulations/results/triplet_pack_py_and_cpp_comparison.png",
-        filter={"method": ["solve_cpp_localsearch", "solve_py_localsearch", "solve_cpp_backtracking", "solve_py_backtracking"]},
+        filter={
+            "method": [
+                "solve_cpp_localsearch",
+                "solve_py_localsearch",
+                "solve_cpp_backtracking",
+                "solve_py_backtracking",
+            ]
+        },
         x_field="items_number",
         y_field="runtime",
         z_field="method",
@@ -184,27 +200,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# experiments_csv.plot_results(
-#     plt,
-#     "results/triplets.csv",
-#     xcolumn="size",
-#     ycolumn="time",
-#     zcolumn="method"
-# )
-# plt.title("Runtime by Method and Size")
-# plt.ylabel("Time (s)")
-# plt.show()
-
-
-# multi_multi_plot(
-#     plt,
-#     csv_path="results/triplets.csv",
-#     group_by1="seed",
-#     group_by2="size",
-#     xcolumn="method",
-#     ycolumn="time",
-# )
-# plt.suptitle("Runtime Comparison: C++ vs Python (Grouped by Seed and Size)")
-# plt.tight_layout()
-# plt.show()
