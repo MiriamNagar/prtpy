@@ -349,6 +349,7 @@ class TripletPlanner:
             SolverData.NoSolution: If no valid configuration is found.
         """
         name = "Local search" if use_local_search else "Backtracking"
+        logger.info(f"starting the {name} execution part")
         for bi in range(self.answer.a_index_set_case_count):
             case_index = bi
             a_index_set = list(self.definitely_a_indices)
@@ -370,7 +371,6 @@ class TripletPlanner:
                 self.triplets_abc,
                 self.group_of_item,
             )
-            logging.info(f"starting the {name} execution part")
             level_backtrack = TripletBacktracker(a_index_set, tsc, use_local_search)
             stats = level_backtrack.get_stats()
 
