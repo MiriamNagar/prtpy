@@ -88,16 +88,11 @@ class MultiCombination:
         >>> mc.get_choice_count(2)
         2
         """
-        logger.debug("MultiCombination.__init__ called")
         self.items: List[MultiCombination.Item] = []
         self.total_count = 0
         self.ctr: List[List[int]] = []
 
-        if indices and weights:
-            logger.info(f"Initializing with indices={indices}, weights={weights}")
-            self.init(indices, weights)
-        else:
-            logger.debug("No indices or weights provided at init")
+        self.init(indices, weights)
 
     def init(self, indices: List[int], weights: List[int]):
         """
@@ -120,9 +115,7 @@ class MultiCombination:
             >>> mc.items[1].weight
             1
         """
-        logger.info("Initializing MultiCombination with given indices and weights")
         if len(indices) != len(weights):
-            logger.error("Indices and weights length mismatch")
             raise ValueError("Indices and weights must have the same size!")
 
         self.total_count = len(indices)
@@ -131,15 +124,11 @@ class MultiCombination:
         for i, w in zip(indices, weights):
             weight_groups[w].append(i)
 
-        logger.debug(f"Grouped weights: {dict(weight_groups)}")
-
         self.items.clear()
         for weight in sorted(weight_groups.keys(), reverse=True):
             item = MultiCombination.Item(weight)
             item.indices = weight_groups[weight]
             self.items.append(item)
-
-        logger.info(f"Items after grouping and sorting: {self.items}")
 
         K = self.total_count
         B = len(self.items)
@@ -159,8 +148,6 @@ class MultiCombination:
                 for c in range(curr_max + 1):
                     sum_val += self.ctr[k - c][b - 1]
                 self.ctr[k][b] = sum_val
-
-        logger.info(f"ctr table computed (partial): {self.ctr[:min(5, K+1)]}")
 
     def get_choice_count(self, k: int) -> int:
         """
@@ -182,12 +169,10 @@ class MultiCombination:
             >>> mc.get_choice_count(5)
             0
         """
-        logger.debug(f"get_choice_count called with k={k}")
         if k > self.total_count:
             logger.warning(f"Requested choice count for k={k} greater than total_count={self.total_count}")
             return 0
         count = self.ctr[k][len(self.items)]
-        logger.info(f"Choice count for k={k}: {count}")
         return count
 
     def get_single_choice(self, k: int, case_index: int) -> List[int]:
@@ -214,7 +199,6 @@ class MultiCombination:
             >>> mc.get_single_choice(2, 1)
             [10, 12]
         """
-        logger.debug(f"get_single_choice called with k={k}, case_index={case_index}")
 
         max_index = self.ctr[k][len(self.items)]
         if not case_index < max_index:
@@ -238,6 +222,4 @@ class MultiCombination:
                     case_index -= sum_val
                     break
                 sum_val = next_sum
-
-        logger.debug(f"get_single_choice result: {result}")
         return result

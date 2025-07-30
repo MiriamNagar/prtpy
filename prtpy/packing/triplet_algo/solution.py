@@ -28,7 +28,7 @@ class Solution:
         []
         """
         self.triplets: List[Triplet] = []
-        logger.debug("Initialized an empty Solution")
+        logger.debug("Initialized an empty Solution object")
 
     def add(self, t: Triplet):
         """
@@ -88,10 +88,8 @@ class Solution:
         >>> '(1, 2, 3)' in s and '(4, 5, 6)' in s
         True
         """
-        logger.debug("Generating string representation of sorted triplets")
         self.sort()
         result = "".join(str(t) for t in self.triplets)
-        logger.debug("Generated string: %s", result)
         return result
 
     def __str__(self):

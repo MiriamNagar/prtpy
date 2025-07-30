@@ -87,7 +87,6 @@ class SolutionChecker:
 
         # Count weights in the problem
         counter: Dict[int, int] = Counter(problem.get_weights())
-        logger.debug(f"Initial weights counter: {counter}")
 
         # Subtract weights used in the solution triplets
         for t in triplets:

@@ -30,7 +30,6 @@ class TripletBacktracker:
         self.tsc = tsc
         self.a_index_set = a_index_set
         self.stats = Stats(SolverData.MAX_LOOPS - self.tsc.total_loops, self.tsc.t_solver_start)
-        logger.info(f"Initializing TripletBacktracker with {len(a_index_set)} a_indices")
         self.triplets: list[TripletInfo] = []
         self.triplet_states: List[Dict[str, int]] = []
         self.chosen_triplet_indices: List[int] = []
@@ -41,8 +40,6 @@ class TripletBacktracker:
         self.prepare()
 
         backtrack_policy = 1 if use_local_search else 0
-        logger.info(f"backtrack policy: {backtrack_policy}")
-        logger.debug("Calling execute_backtrack() from __init__")
         self.stats.is_backtrack_successful = self.execute_backtrack(backtrack_policy)
 
     def prepare(self):
@@ -54,7 +51,6 @@ class TripletBacktracker:
         This method is called automatically from __init__.
         """
         G = len(self.tsc.groups)
-        logger.debug(f"Preparing TripletBacktracker with {G} groups")
 
         self.groups: list[GroupInfo] = [GroupInfo(left_a=0, left_bc=self.tsc.group_cardinality[g]) for g in range(G)]
         self.take_options_a = [0] * G
@@ -74,9 +70,6 @@ class TripletBacktracker:
             g = self.tsc.group_of_item[a_idx]
             self.groups[g].left_a += 1
             self.groups[g].left_bc -= 1
-        logger.debug(
-            f"Group counts after initial counts: {[{'left_a': g.left_a, 'left_bc': g.left_bc} for g in self.groups]}"
-        )
 
         for t in range(T):
             a, b, c = self.triplets[t].triplet
@@ -105,7 +98,7 @@ class TripletBacktracker:
         """
         is_sol = len(self.chosen_triplet_indices) == len(self.a_index_set)
         logger.debug(
-            f"is_solution check: {is_sol} ({len(self.chosen_triplet_indices)} chosen vs {len(self.a_index_set)})"
+            f"checking if solution found: {is_sol}"
         )
         return is_sol
 
@@ -141,7 +134,6 @@ class TripletBacktracker:
         Returns:
             List[int]: Indices of selected triplets.
         """
-        logger.info(f"Getting chosen triplet indices: {self.chosen_triplet_indices}")
         return self.chosen_triplet_indices
 
     def execute_backtrack(self, backtrack_policy: int = 0) -> bool:
@@ -165,16 +157,12 @@ class TripletBacktracker:
             next_event_handling += SolverData.BACKTRACK_CHECK_TIME_PER_LOOPS
             if next_event_handling > self.stats.max_loops:
                 next_event_handling = self.stats.max_loops
-            logger.debug(f"Next event set to loop count: {next_event_handling}")
 
         def check_next_event():
             if self.stats.current_loops == next_event_handling:
-                logger.debug(f"Reached next event loop count: {self.stats.current_loops}")
                 if self.stats.current_loops == self.stats.max_loops:
-                    logger.error(f"Timeout reached at loop count: {self.stats.current_loops}")
                     raise SolverData.ProblemTooBig(f"Timeout: branching loop count: {self.stats.current_loops}")
             elapsed = SolverData.get_current_time() - self.stats.t_solver_start
-            logger.debug(f"Elapsed time: {elapsed:.2f}s")
             if elapsed > SolverData.MAX_CASE_SECONDS:
                 logger.error(f"Timeout reached at elapsed time: {elapsed:.2f}s")
                 raise SolverData.ProblemTooBig(f"Timeout: computation time: {elapsed} s")
@@ -182,8 +170,7 @@ class TripletBacktracker:
 
         while True:
             if self.is_solution():
-                logger.info("### SOLUTION FOUND IN BACKTRACKING PHASE! ###")
-                self.analyze_solution()
+                logger.info("# SOLUTION FOUND! #")
                 return True
 
             check_next_event()
@@ -216,7 +203,6 @@ class TripletBacktracker:
             steps = self.stats.current_step_count - orig_step_count
             self.stats.loop_states_by_depth[depth] += 1
             self.stats.loop_states_by_step_counts[steps] += 1
-            logger.debug(f"Loop {self.stats.current_loops}: depth={depth}, steps_added={steps}")
 
     def add_used_triplet(self, triplet_index: int) -> None:
         """
@@ -428,7 +414,6 @@ class TripletBacktracker:
         Raises:
             BranchImpossible: When no feasible branching can be made.
         """
-        logger.debug("Starting main_branching_loop")
         G = len(self.groups)
         while True:
             triplet_retire: List[Step] = []
@@ -461,7 +446,6 @@ class TripletBacktracker:
                 return False
 
             if not is_critical():
-                logger.debug("No critical groups found, breaking from main_branching_loop")
                 break
 
             for triplet_index in list(self.available_triplet_indices):
@@ -484,7 +468,6 @@ class TripletBacktracker:
         best_group_which = 0
         best_group_index = 0
         best_ratio = (0, 0)
-        logger.debug(f"Groups at branching choice: {self.groups}")
 
         for a in range(G):
             if not self.groups[a].left_a:
@@ -513,7 +496,6 @@ class TripletBacktracker:
             if best_group_which == 1
             else self.groups[best_group_index].available_triplet_indices_bc
         )
-        logger.debug(f"Triplet candidates for branching: {triplet_candidate_indices}")
 
         best_mu = 0
         best_ti = None
@@ -525,7 +507,6 @@ class TripletBacktracker:
                 best_mu, best_ti = mu, ti
 
         if best_mu == 0:
-            logger.debug("Best max_uses is 0, raising BranchImpossible")
             raise BranchImpossible()
 
         # branching apply then exclude
@@ -547,7 +528,6 @@ class TripletBacktracker:
             bool: True if an alternative branch was found and applied, False otherwise.
         """
         self.stats.current_backtrack_events += 1
-        logger.debug(f"Undoing until next branch. Current backtrack events: {self.stats.current_backtrack_events}")
 
         while self.stack:
             last_step = self.stack[-1]
@@ -558,14 +538,11 @@ class TripletBacktracker:
                     last_step.perform()
                     failing_branch = self.stats.winning_branches[-1]
                     failing_branch.apply = not failing_branch.apply
-                    logger.debug("Backtracked to previous branching step, toggled apply state")
                     return True
                 self.stats.winning_branches.pop()
-                logger.debug("No options left in branching step, popped winning branch")
 
             self.stack.pop()
 
-        logger.debug("No more steps to undo, returning False")
         return False
 
     def get_stats(self):
@@ -575,7 +552,6 @@ class TripletBacktracker:
         Returns:
             Stats: The stats instance tracking the backtracking state.
         """
-        logger.debug("Retrieving stats")
         return self.stats
 
     def get_chosen_triplets(self) -> List[Tuple[int, int, int]]:

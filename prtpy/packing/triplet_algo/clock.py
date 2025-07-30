@@ -41,7 +41,6 @@ class Clock:
             formatted = base_time + frac
         else:
             formatted = base_time
-        logger.debug("Clock.print_time() -> %s", formatted)
         return formatted
 
     @staticmethod
@@ -55,7 +54,6 @@ class Clock:
             float: Elapsed time in seconds.
         """
         elapsed_time = time.perf_counter() - Clock._start_time
-        logger.debug("Clock.elapsed() -> %.6f", elapsed_time)
         return elapsed_time
 
     @staticmethod
