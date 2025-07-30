@@ -10,7 +10,7 @@ from .models import SolverData, TripletSearchContext
 from .triplet_backtracker import TripletBacktracker
 from .triplet_local_search import TripletLocalSearch
 
-logger = logging.getLogger("trialgo.triplet_algo")
+logger = logging.getLogger(__name__)
 
 
 class TripletPlanner:
