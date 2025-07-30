@@ -370,7 +370,7 @@ class TripletPlanner:
                 self.triplets_abc,
                 self.group_of_item,
             )
-            logging.info(f"starting {name} main execution part")
+            logging.info(f"starting the {name} execution part")
             level_backtrack = TripletBacktracker(a_index_set, tsc, use_local_search)
             stats = level_backtrack.get_stats()
 
