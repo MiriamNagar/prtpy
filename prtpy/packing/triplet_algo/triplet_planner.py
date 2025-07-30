@@ -120,7 +120,7 @@ class TripletPlanner:
         logger.info("Grouping item indices that have the same weight")
         for i, w in enumerate(self.orig_weights):
             self.weight_map_desc[w].append(i)
-        logger.debug(f"Weight map (descending): {dict(self.weight_map_desc)}")
+        logger.debug(f"Weight map (for each weight which indexes in the items list have that weight): {dict(self.weight_map_desc)}")
 
         self.groups = []
         self.weight_of_group = []
@@ -203,7 +203,7 @@ class TripletPlanner:
                 triplets_possible.add(t)
                 for g in t:
                     occurrences[g].add(t)
-        logger.info(f"Number of unique triplets after filtering: {len(triplets_possible)}")
+        logger.info(f"Number of triplets that have enough instances to actually possibly be added to solution: {len(triplets_possible)}")
 
         while True:
             singleton_choice_triplets = set()
@@ -243,7 +243,7 @@ class TripletPlanner:
 
         self.triplets_abc = list(triplets_possible)
         if len(self.triplets_abc) != 0:
-            logger.info(f"Unique triplets found after preprocess: {len(self.triplets_abc)}")
+            logger.info(f"Unique triplets found after preprocess: {self.preprocess_triplets}")
         else:
             logger.info(f"No unique triplets found after preprocess step")
         self.answer.preprocess_triplet_count = len(self.preprocess_triplets)
@@ -289,9 +289,6 @@ class TripletPlanner:
             if maybe_a > 0:
                 maybe_a_counts[g] = maybe_a
                 maybe_a_cardinality += maybe_a
-
-        logger.debug(f"Items that must be A, meaning they are the biggest number planned for each triplet combined: {dict(definitely_a_counts)}")
-        logger.debug(f"Items that could be A, meaning they could be the biggest number planned for each triplet combined: {dict(maybe_a_counts)}")
 
         self.answer.definitely_a_cardinality = definitely_a_cardinality
         self.answer.maybe_a_cardinality = maybe_a_cardinality
@@ -362,6 +359,9 @@ class TripletPlanner:
             a_index_set += maybe_a_indices
             A = len(a_index_set)  # number of triplets to be formed
 
+            a_weights = [self.weight_of_group[i] for i in a_index_set]
+            logging.info(f"current A items to be run with algorithm: {a_weights}")
+
             tsc = TripletSearchContext(
                 self.answer.total_loops,
                 self.t_solver_start,
@@ -370,7 +370,7 @@ class TripletPlanner:
                 self.triplets_abc,
                 self.group_of_item,
             )
-
+            logging.info(f"starting {name} main execution part")
             level_backtrack = TripletBacktracker(a_index_set, tsc, use_local_search)
             stats = level_backtrack.get_stats()
 
