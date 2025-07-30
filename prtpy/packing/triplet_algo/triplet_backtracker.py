@@ -97,9 +97,6 @@ class TripletBacktracker:
             bool: True if number of chosen triplets equals number of required a-indices.
         """
         is_sol = len(self.chosen_triplet_indices) == len(self.a_index_set)
-        logger.debug(
-            f"checking if solution found: {is_sol}"
-        )
         return is_sol
 
     def analyze_solution(self):
@@ -186,11 +183,8 @@ class TripletBacktracker:
                     logger.warning("No changes added to stack in branching loop.")
                     raise SolverData.NoSolution("No changes added to stack in branching loop.")
             except BranchImpossible:
-                logger.debug("BranchImpossible exception caught during backtracking")
                 if backtrack_policy == 0:
-                    logger.debug("BACKTRACKING_POLICY=0: undoing until next branch")
                     if not self.undo_until_next_branch():
-                        logger.debug("No more branches to undo; returning False")
                         return False
                 elif backtrack_policy == 1:
                     return False
@@ -563,5 +557,4 @@ class TripletBacktracker:
 
         """
         triplets = [self.triplets[i].triplet for i in self.chosen_triplet_indices]
-        logger.info(f"Chosen triplets: {triplets}")
         return triplets

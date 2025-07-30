@@ -28,7 +28,6 @@ class Solution:
         []
         """
         self.triplets: List[Triplet] = []
-        logger.debug("Initialized an empty Solution object")
 
     def add(self, t: Triplet):
         """
@@ -56,7 +55,6 @@ class Solution:
         >>> sol.get_triplets()
         [(1, 2, 3)]
         """
-        logger.debug("Retrieving triplets, count: %d", len(self.triplets))
         return self.triplets
 
     def sort(self):
