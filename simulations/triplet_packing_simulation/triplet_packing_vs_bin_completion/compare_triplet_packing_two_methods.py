@@ -5,6 +5,8 @@ from prtpy.binners import BinnerKeepingContents
 import prtpy
 from prtpy.packing.triplet_packing import triplet_packing
 
+RESULTS_FOLDER_PATH = "simulations/triplet_packing_simulation/triplet_packing_vs_bin_completion/results"
+
 
 def generate_triplet_input(bin_size: int, items_num: int):
     upper_bnd: int = round(bin_size / 2)
@@ -60,7 +62,7 @@ def general_packing_algorithm_casing(
 
 def main():
     experiments_csv.logger.setLevel(logging.INFO)
-    experiment1 = experiments_csv.Experiment("simulations/results/", "comparison_triplet_vs_local.csv", backup_folder=None)
+    experiment1 = experiments_csv.Experiment(f"{RESULTS_FOLDER_PATH}", "comparison_triplet_vs_local.csv", backup_folder=None)
 
     random.seed(27)
 
@@ -75,8 +77,8 @@ def main():
     experiment1.run_with_time_limit(triplet_packing_algorithm_casing, input_ranges, time_limit=60)
 
     experiments_csv.multi_multi_plot_results(
-        "simulations/results/comparison_triplet_vs_local.csv",
-        save_to_file_template="simulations/results/triplet_local_vs_backtrack_runtime_comparison.png",
+        f"{RESULTS_FOLDER_PATH}/comparison_triplet_vs_local.csv",
+        save_to_file_template=f"{RESULTS_FOLDER_PATH}/triplet_local_vs_backtrack_runtime_comparison.png",
         x_field="items_number",               # X-axis: problem size
         y_fields=["runtime"],                 # Only interested in runtime
         z_field="use_local_search",           # Compare local search vs regular
@@ -88,7 +90,7 @@ def main():
     )
 
     # --- bin completion vs triplet packing runtime comparison: ---
-    experiment2 = experiments_csv.Experiment("simulations/results/", "comparison_bin_completion_vs_triplet_packing.csv", backup_folder=None)
+    experiment2 = experiments_csv.Experiment(f"{RESULTS_FOLDER_PATH}", "comparison_bin_completion_vs_triplet_packing.csv", backup_folder=None)
     # the values for the item numbers should keep low since the runtime rises quickly for bin_completion algorithm
     input_ranges = {
         "algorithm": [prtpy.packing.bin_completion, triplet_packing],
@@ -99,8 +101,8 @@ def main():
     experiment2.run_with_time_limit(general_packing_algorithm_casing, input_ranges, time_limit=60)
 
     experiments_csv.multi_multi_plot_results(
-        "simulations/results/comparison_bin_completion_vs_triplet_packing.csv",
-        save_to_file_template="simulations/results/bin_completion_vs_backtrack_runtime_comparison.png",
+        f"{RESULTS_FOLDER_PATH}/comparison_bin_completion_vs_triplet_packing.csv",
+        save_to_file_template=f"{RESULTS_FOLDER_PATH}/bin_completion_vs_backtrack_runtime_comparison.png",
         x_field="items_number",               # X-axis: problem size
         y_fields=["runtime"],                 # Only interested in runtime
         z_field="algorithm",           # Compare local search vs regular
