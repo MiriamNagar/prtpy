@@ -47,13 +47,11 @@ class TripletPlanner:
         Args:
             problem (Problem): Instance of the triplet packing problem.
         """
-        logger.debug("Initializing TripletPlanner")
         self.orig_problem = problem
         self.answer = SolverData.Answer()
         self.t_solver_start = SolverData.get_current_time()
         self.orig_weights = problem.get_weights()
         self.desired_sum = sum(self.orig_weights) // (len(self.orig_weights) // 3)
-        logger.debug(f"Desired sum per triplet: {self.desired_sum}")
 
         self.definitely_a_indices: List[int] = []
         self.groups: List[deque[int]] = []
@@ -94,7 +92,6 @@ class TripletPlanner:
         Args:
             msg (str): Error message.
         """
-        logger.debug(f"Setting error message: {msg}")
         self.answer.error_message = msg
 
     def get_answer(self):
@@ -136,7 +133,6 @@ class TripletPlanner:
             for idx in indices:
                 self.group_of_item[idx] = group_index
             self.group_cardinality.append(len(indices))
-            logger.debug(f"Group {group_index}: weight={weight}, count={len(indices)}")
 
     def calculate_triplet_abc(self):
         """
@@ -161,7 +157,6 @@ class TripletPlanner:
                     gic -= 1
                 else:
                     self.triplets_abc_theoretical.append((gia, gib, gic))
-                    logger.debug(f"Found a valid triplet combination: ({gia}, {gib}, {gic})")
                     gib += 1
                     gic -= 1
 
@@ -191,7 +186,6 @@ class TripletPlanner:
                 usage = min(cardinalities[a], cardinalities[b] // 2)
             else:
                 usage = min(cardinalities[a], cardinalities[b], cardinalities[c])
-        logger.debug(f"Max usage found for triplet {t}: {usage}")
         return usage
 
     def preprocess(self):
@@ -362,15 +356,11 @@ class TripletPlanner:
             case_index = bi
             a_index_set = list(self.definitely_a_indices)
 
-            logger.debug(f"Definitely A indices used: {a_index_set}")
-
             # Add choice of maybe-A
             maybe_a_indices = self.mc_maybe_a.get_single_choice(self.answer.maybe_a_choose, case_index)
-            logger.debug(f"Maybe A indices chosen: {maybe_a_indices}")
+
             a_index_set += maybe_a_indices
             A = len(a_index_set)  # number of triplets to be formed
-            logging.info(f"Number of triplets to be formed in the {name} algorithm phase")
-            logging.info(f"Current A group we use to form the triplets with {name}")
 
             tsc = TripletSearchContext(
                 self.answer.total_loops,
