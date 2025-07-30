@@ -78,7 +78,6 @@ class TripletPlanner:
             use_local_search (bool): Whether to attempt a local search
                                      if backtracking fails to find a valid solution.
         """
-        logger.debug("Starting execute_algorithm")
         self.calculate_basic_data()
         self.calculate_equal_groups()
         self.calculate_triplet_abc()
@@ -87,7 +86,6 @@ class TripletPlanner:
         self.perform_backtrack_level(use_local_search)
         self.finalize_solution()
         self.post_check()
-        logger.debug("Finished execute_algorithm")
 
     def set_message(self, msg: str):
         """
@@ -113,7 +111,7 @@ class TripletPlanner:
         Sort original weights descending and compute desired triplet sum.
         desired_sum = (sum(weights)) / (N/3)
         """
-        logger.info("Calculating basic data: sorting weights")
+        logger.info("Calculating basic data: sorting weights in descending order before running the algorithm")
         self.orig_weights.sort(reverse=True)
         logger.debug(f"Sorted original weights: {self.orig_weights}")
 
@@ -122,7 +120,7 @@ class TripletPlanner:
         Group item indices by identical weights.
         Each group corresponds to a unique weight value.
         """
-        logger.info("Calculating equal groups")
+        logger.info("Grouping item indices that have the same weight")
         for i, w in enumerate(self.orig_weights):
             self.weight_map_desc[w].append(i)
         logger.debug(f"Weight map (descending): {dict(self.weight_map_desc)}")
@@ -146,10 +144,11 @@ class TripletPlanner:
         the desired triplet sum.
         Group indices (not item indices) are used.
         """
-        logger.info("Calculating theoretical triplets (abc)")
+        logger.info("Generating all valid combinations of triplets whose total weight matches the desired bin size, " \
+                    "this is only in theory since instances aren't taken into account yet")
         group_weights = [weight for weight, _ in self.weight_map_desc.items()]
         G = len(self.groups)
-        logger.debug(f"Number of groups: {G}")
+        logger.debug(f"Number of unique weights(without repetitions): {G}")
 
         for gia in range(G):
             gib = gia
@@ -162,11 +161,11 @@ class TripletPlanner:
                     gic -= 1
                 else:
                     self.triplets_abc_theoretical.append((gia, gib, gic))
-                    logger.debug(f"Found theoretical triplet: ({gia}, {gib}, {gic})")
+                    logger.debug(f"Found a valid triplet combination: ({gia}, {gib}, {gic})")
                     gib += 1
                     gic -= 1
 
-        logger.info(f"Total theoretical triplets found: {len(self.triplets_abc_theoretical)}")
+        logger.info(f"Total theoretically valid triplets found: {len(self.triplets_abc_theoretical)}")
 
     def get_max_triplet_usage(self, t: Tuple[int, int, int], cardinalities: List[int] = None):
         """
@@ -192,7 +191,7 @@ class TripletPlanner:
                 usage = min(cardinalities[a], cardinalities[b] // 2)
             else:
                 usage = min(cardinalities[a], cardinalities[b], cardinalities[c])
-        logger.debug(f"Max usage for triplet {t}: {usage}")
+        logger.debug(f"Max usage found for triplet {t}: {usage}")
         return usage
 
     def preprocess(self):
@@ -200,7 +199,7 @@ class TripletPlanner:
         Perform singleton pruning: fix triplets that must occur due to unique participation.
         Reduces the problem size before full search.
         """
-        logger.info("Starting preprocess")
+        logger.info("Fixing triplets that must occur due to unique participation, to reduce the problem size before full search")
         G = len(self.groups)
         occurrences = [set() for _ in range(G)]
         triplets_possible = set()
@@ -210,7 +209,7 @@ class TripletPlanner:
                 triplets_possible.add(t)
                 for g in t:
                     occurrences[g].add(t)
-        logger.info(f"Triplets possible after filtering: {len(triplets_possible)}")
+        logger.info(f"Number of unique triplets after filtering: {len(triplets_possible)}")
 
         while True:
             singleton_choice_triplets = set()
@@ -228,7 +227,7 @@ class TripletPlanner:
                     singleton_choice_triplets.add(next(iter(occurrences[group])))
 
             if not singleton_choice_triplets:
-                logger.debug("No singleton choice triplets found, exiting preprocess loop")
+                logger.debug("No unique choice triplets found, exiting preprocess loop that checks that")
                 break
 
             triplets_to_erase = set()
@@ -249,7 +248,10 @@ class TripletPlanner:
                 triplets_possible.discard(t)
 
         self.triplets_abc = list(triplets_possible)
-        logger.info(f"Triplets after preprocess: {len(self.triplets_abc)}")
+        if len(self.triplets_abc) != 0:
+            logger.info(f"Unique triplets found after preprocess: {len(self.triplets_abc)}")
+        else:
+            logger.info(f"No unique triplets found after preprocess step")
         self.answer.preprocess_triplet_count = len(self.preprocess_triplets)
 
     def calculate_possibles(self):
@@ -261,7 +263,8 @@ class TripletPlanner:
         Validates if the number of usable A-role items is consistent with the number
         of required triplets (T).
         """
-        logger.info("Calculating possibles")
+        logger.info("chose items that must be in the A group - meaning they are the group of the biggest items in each triplet together")
+        logger.info("Select among all items which items will serve as the largest in each triplet (called A-items). There must be exactly one A-item per bin.")        
         G = len(self.groups)
         max_a = [0] * G
         max_bc = [0] * G
@@ -271,8 +274,6 @@ class TripletPlanner:
             max_a[a] += max_uses
             max_bc[b] += max_uses
             max_bc[c] += max_uses
-        logger.debug(f"max_a per group: {max_a}")
-        logger.debug(f"max_bc per group: {max_bc}")
 
         definitely_a_counts = defaultdict(int)
         maybe_a_counts = defaultdict(int)
@@ -295,16 +296,14 @@ class TripletPlanner:
                 maybe_a_counts[g] = maybe_a
                 maybe_a_cardinality += maybe_a
 
-        logger.debug(f"Definitely A counts: {dict(definitely_a_counts)}")
-        logger.debug(f"Definitely A cardinality: {definitely_a_cardinality}")
-        logger.debug(f"Maybe A counts: {dict(maybe_a_counts)}")
-        logger.debug(f"Maybe A cardinality: {maybe_a_cardinality}")
+        logger.debug(f"Items that must be A, meaning they are the biggest number planned for each triplet combined: {dict(definitely_a_counts)}")
+        logger.debug(f"Items that could be A, meaning they could be the biggest number planned for each triplet combined: {dict(maybe_a_counts)}")
 
         self.answer.definitely_a_cardinality = definitely_a_cardinality
         self.answer.maybe_a_cardinality = maybe_a_cardinality
 
         T = len(self.orig_weights) // 3 - len(self.preprocess_triplets)
-        logger.info(f"Triplets left to form (T): {T}")
+        logger.info(f"Number of triplets left to form: {T}")
 
         if definitely_a_cardinality + maybe_a_cardinality < T:
             msg = "Too few A-role weights available."
@@ -331,27 +330,21 @@ class TripletPlanner:
                 else:
                     break
             if def_a_left or maybe_a_left:
-                msg = "Implementation error: not all definitely_a or maybe_a used"
+                msg = "Implementation error: not enough items that could be in A group"
                 logger.error(msg)
                 raise SolverData.NoSolution(msg)
-
-        logger.info(f"Definitely A indices: {self.definitely_a_indices}")
-        logger.info(f"Maybe A indices: {maybe_a_indices}")
-        logger.info(f"Maybe A weights: {maybe_a_weights}")
 
         self.mc_maybe_a.init(maybe_a_indices, maybe_a_weights)
 
         maybe_a_choose = T - definitely_a_cardinality
-        logger.info(f"Maybe A choose count: {maybe_a_choose}")
 
         self.answer.maybe_a_choose = maybe_a_choose
         self.answer.a_index_set_case_count = self.mc_maybe_a.get_choice_count(maybe_a_choose)
-        logger.info(f"A index set case count: {self.answer.a_index_set_case_count}")
 
         # addition
         self.T = len(self.triplets_abc)
         self.G = len(self.groups)
-        logger.debug(f"T (triplets count): {self.T}, G (groups count): {self.G}")
+        logging.info("finished finding must be and could be A items")
 
     def perform_backtrack_level(self, use_local_search: bool = False):
         """
@@ -364,19 +357,20 @@ class TripletPlanner:
         Raises:
             SolverData.NoSolution: If no valid configuration is found.
         """
-        logger.info("Starting perform_backtrack_level")
+        name = "Local search" if use_local_search else "Backtracking"
         for bi in range(self.answer.a_index_set_case_count):
             case_index = bi
             a_index_set = list(self.definitely_a_indices)
 
-            logger.info(f"Trying case index: {case_index}")
-            logger.info(f"Definitely A indices: {a_index_set}")
+            logger.debug(f"Definitely A indices used: {a_index_set}")
 
             # Add choice of maybe-A
             maybe_a_indices = self.mc_maybe_a.get_single_choice(self.answer.maybe_a_choose, case_index)
-            logger.info(f"Maybe A indices chosen: {maybe_a_indices}")
+            logger.debug(f"Maybe A indices chosen: {maybe_a_indices}")
             a_index_set += maybe_a_indices
             A = len(a_index_set)  # number of triplets to be formed
+            logging.info(f"Number of triplets to be formed in the {name} algorithm phase")
+            logging.info(f"Current A group we use to form the triplets with {name}")
 
             tsc = TripletSearchContext(
                 self.answer.total_loops,
@@ -389,7 +383,6 @@ class TripletPlanner:
 
             level_backtrack = TripletBacktracker(a_index_set, tsc, use_local_search)
             stats = level_backtrack.get_stats()
-            logger.debug(f"Backtrack stats: {stats}")
 
             self.answer.total_step_count += stats.current_step_count
             self.answer.total_branching_count += stats.current_branching_count
@@ -406,19 +399,16 @@ class TripletPlanner:
                 )
 
             if stats.is_backtrack_successful:
-                logger.info("Backtrack successful")
+                logger.info(f"{name} successful")
                 self.answer.success = True
                 self.answer.a_cases_investigated = case_index + 1
                 self.answer.winning_branches = stats.winning_branches
                 self.algorithm_chosen_triplets = level_backtrack.get_chosen_triplets()
                 return
 
-            logger.info("Backtrack failed, trying improvement heuristic" if use_local_search else "Skipping heuristic")
-
             if not use_local_search:
                 continue
 
-            logger.info("Running improvement heuristic")
             self.answer.a_cases_investigated = case_index + 1
             self.answer.winning_branches = stats.winning_branches
 
@@ -429,20 +419,16 @@ class TripletPlanner:
 
             while True:
                 if level_improvement.get_final_triplet_count() == A:
-                    logger.info("Improvement successful, full solution found")
                     self.answer.success = True
                     self.algorithm_chosen_triplets = level_improvement.get_final_triplets()
                     improvement_final_success = True
                     break
 
                 success, steps = level_improvement.perform(2, 100000)
-                logger.info(f"Improvement pass: success={success}, steps={steps}")
                 if not success:
-                    logger.error("Improvement failed to proceed further")
                     break
 
             stats = level_improvement.get_stats()
-            logger.debug(f"Improvement stats: {stats}")
 
             self.answer.improvement_passes = stats.passes
             self.answer.improvement_distance = stats.distance
@@ -452,12 +438,12 @@ class TripletPlanner:
             self.answer.improvement_skip2_count = stats.skip2_count
 
             if not improvement_final_success:
-                logger.error("No solution found during improvement phase")
-                raise SolverData.NoSolution("No solution found - reported at C level.")
+                logger.error(f"No solution found during {name} phase")
+                raise SolverData.NoSolution(f"No solution found during {name} phase")
             return
 
-        logger.error("No solution found during backtrack phase")
-        raise SolverData.NoSolution("No solution found - reported at A level.")
+        logger.error(f"No solution found during {name} phase")
+        raise SolverData.NoSolution(f"No solution found during {name} phase")
 
     def finalize_solution(self):
         """
@@ -493,11 +479,10 @@ class TripletPlanner:
             weight_a = self.orig_weights[a_index]
             weight_b = self.orig_weights[b_index]
             weight_c = self.orig_weights[c_index]
-            logger.debug(f"Adding triplet to solution: ({weight_a}, {weight_b}, {weight_c})")
             solution.add(Triplet(weight_a, weight_b, weight_c))
 
         self.answer.solution = solution
-        logger.info("Solution finalized and stored in answer")
+        logger.info("Solution finalized and stored in answer object")
 
     def post_check(self):
         """

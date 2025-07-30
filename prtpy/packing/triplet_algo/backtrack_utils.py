@@ -45,7 +45,6 @@ class Stats:
         self.current_loops = 0
         self.max_loops = max_loops
         self.t_solver_start = t_solver_start
-        logger.debug("Stats initialized with max_loops=%d", max_loops)
 
 
 class Step:
@@ -163,4 +162,3 @@ class BranchingStep(Step):
 
         self.backtrack_happened = True
         self.step_count_backtrack = self.triplet_backtracker.stats.current_step_count
-        logger.debug("Backtrack happened. Step count at backtrack: %d", self.step_count_backtrack)

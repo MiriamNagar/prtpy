@@ -321,7 +321,6 @@ class TripletLocalSearch:
             planner_triplets: List of all available triplets.
             planner_cardinalities: List of maximum capacities for each group.
         """
-        logger.debug("Initializing TripletLocalSearch")
         self.orig_chosen_triplet_indices = orig_chosen_triplet_indices
         self.triplets: List[TripletLocalSearch.TripletInfo] = []
         self.groups: List[TripletLocalSearch.GroupInfo] = []
@@ -332,8 +331,6 @@ class TripletLocalSearch:
         self.triplets = [TripletLocalSearch.TripletInfo(t) for t in planner_triplets]
         G = len(planner_cardinalities)
         self.groups = [TripletLocalSearch.GroupInfo(card) for card in planner_cardinalities]
-
-        logger.debug(f"Total triplets: {T}, total groups: {G}")
 
         for t_index in range(T):
             a, b, c = self.triplets[t_index].triplet
@@ -347,7 +344,6 @@ class TripletLocalSearch:
             self.groups[a].left -= 1
             self.groups[b].left -= 1
             self.groups[c].left -= 1
-            logger.debug(f"Initial triplet {t_index} used: ({a}, {b}, {c})")
 
     def perform(self, max_infeas_count: int, max_steps: int) -> Tuple[bool, int]:
         """
@@ -370,7 +366,6 @@ class TripletLocalSearch:
             If a feasible solution is found (infeasibility count is 0 and at least one triplet was added or removed),
             it is applied back to the main data structures, updating the triplet usages and group states.
         """
-        logger.debug(f"Starting local search with max_infeas_count={max_infeas_count}, max_steps={max_steps}")
         self.stats.passes += 1
 
         counter = itertools.count()
@@ -383,7 +378,6 @@ class TripletLocalSearch:
 
         for step in range(max_steps):
             if not nodes_remaining:
-                logger.debug("No more nodes remaining, stopping search")
                 self.stats.node_count += step + 1
                 self.stats.saved_count += len(nodes_all)
                 return False, step
@@ -391,7 +385,6 @@ class TripletLocalSearch:
             _, _, node = heapq.heappop(nodes_remaining)
 
             if node.infeas_count == 0 and node.extra_items > 0:
-                logger.debug(f"Feasible solution found at step {step}")
                 node.apply_solution_on_parent()
                 self.stats.node_count += step + 1
                 self.stats.saved_count += len(nodes_all)

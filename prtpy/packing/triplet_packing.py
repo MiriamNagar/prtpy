@@ -98,18 +98,15 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
         logging.error(f"Invalid input for items: should input at least 3 items, items: {items}")
         raise TypeError(f"Invalid input for items: should input at least 3 items, items: {items}") 
 
-    logger.info(f"Starting backtrack_method with {len(items)} items and bin size {binsize}")
     problem = Problem()
     problem.init(items, binsize)
 
-    logger.info("Problem initialized. Solving with backtracking...")
     result = Solver.solve(problem, use_local_search)
     if not result.success:
         logging.error(result.error_message)
         raise RuntimeError(result.error_message)
 
     bins = binner.new_bins(len(items) // 3)
-    logger.info("Creating bins and assigning triplets...")
     for bin_i, triplet in enumerate(result.solution.get_triplets()):
         for item in triplet.get():
             binner.add_item_to_bin(bins, item, bin_i)
