@@ -167,7 +167,7 @@ class TripletBacktracker:
 
         while True:
             if self.is_solution():
-                logger.info("# SOLUTION FOUND! #")
+                # logger.info("# SOLUTION FOUND! #")
                 return True
 
             check_next_event()
