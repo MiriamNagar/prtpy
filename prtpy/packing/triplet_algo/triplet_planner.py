@@ -242,7 +242,7 @@ class TripletPlanner:
                 triplets_possible.discard(t)
 
         self.triplets_abc = list(triplets_possible)
-        if len(self.triplets_abc) != 0:
+        if len(self.preprocess_triplets) != 0:
             logger.info(f"Unique triplets found after preprocess: {self.preprocess_triplets}")
         else:
             logger.info(f"No unique triplets found after preprocess step")
