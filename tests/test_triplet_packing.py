@@ -238,6 +238,14 @@ def test_creation_random_allocatable_item_list():
     assert check_item_list_is_valid(bin_size, triplets)
 
 
+def assert_triplet_packing_valid_result(result, binsize):
+    _ , triplets_result = result
+
+    for tri in triplets_result:
+        assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
+        assert sum(tri) == binsize, f"Bin sum mismatch: got {sum(tri)} instead of {binsize}"
+
+
 def test_randomized_items_packing_allocation():
     bin_sizes = [1000]
     item_nums = [60, 99]
@@ -249,19 +257,11 @@ def test_randomized_items_packing_allocation():
 
         # backtrack
         bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list)
-        _, triplets_result = bin_result
-
-        for tri in triplets_result:
-            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
-            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
+        assert_triplet_packing_valid_result(bin_result, b_size)
 
         # local search
         bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search=True)
-        _, triplets_result = bin_result
-
-        for tri in triplets_result:
-            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
-            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
+        assert_triplet_packing_valid_result(bin_result, b_size)
 
 
 def test_items_packing_allocation():
@@ -272,19 +272,11 @@ def test_items_packing_allocation():
 
         # backtrack
         bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list)
-        _, triplets_result = bin_result
-
-        for tri in triplets_result:
-            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
-            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
+        assert_triplet_packing_valid_result(bin_result, b_size)
 
         # local search
         bin_result = triplet_packing(BinnerKeepingContents(), binsize=b_size, items=item_list, use_local_search=True)
-        _, triplets_result = bin_result
-
-        for tri in triplets_result:
-            assert len(tri) == 3, f"Expected 3 items per bin, got {len(tri)}"
-            assert sum(tri) == b_size, f"Bin sum mismatch: got {sum(tri)} instead of {b_size}"
+        assert_triplet_packing_valid_result(bin_result, b_size)
 
 
 def test_invalid_input_throws_exception():

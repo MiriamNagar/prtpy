@@ -110,7 +110,7 @@ def triplet_packing(binner: Binner, binsize: float, items: List[Any], use_local_
     for bin_i, triplet in enumerate(result.solution.get_triplets()):
         for item in triplet.get():
             binner.add_item_to_bin(bins, item, bin_i)
-    logger.info(f"solution completed with {len(bins[1])} bins.")
+    logger.info(f"solution completed with {binner.numbins} bins.")
     return bins
 
 if __name__ == "__main__":
